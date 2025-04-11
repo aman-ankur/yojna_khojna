@@ -1,36 +1,36 @@
-# Progress: AI-Powered Government Scheme Assistant (Initialization)
+# Progress: AI-Powered Government Scheme Assistant
 
 ## Current Status
 
-*   **Project Start:** No functional components have been built yet.
-*   **Foundation:** Core documentation (Memory Bank) has been initialized based on the provided PRD and POC Technical Architecture.
+*   **Phase 1 In Progress:** Foundational data pipeline work has started.
+*   **Backend Setup:** Python backend environment (`backend/yojna`) initialized with core dependencies.
+*   **PDF Processing:** Initial implementation for PDF text extraction with OCR fallback (using `pdfplumber` and `pytesseract`) is complete.
+*   **Foundation:** Core documentation (Memory Bank) updated with implementation plan and project rules.
 
 ## What Works
 
-*   N/A (No implementation yet)
+*   Python script (`backend/src/data_pipeline/pdf_extractor.py`) can extract text from both text-based and image-based PDFs (English & Hindi) using direct extraction and Tesseract OCR fallback.
+*   Basic backend project structure is in place.
 
-## What's Left to Build (POC Plan)
+## What's Left to Build (Implementation Plan Summary)
 
-The POC development is planned in the following phases (as per the Technical Architecture):
+*   **Phase 1:**
+    *   [X] Set up Python backend environment
+    *   [X] Implement PDF ingestion and text extraction (`pdfplumber`)
+    *   [X] Integrate Tesseract OCR (with Hindi support)
+    *   [ ] Set up vector database (Weaviate/Pinecone)
+    *   [ ] Implement document chunking
+    *   [ ] Implement text embedding (Hugging Face) and storage
+    *   [ ] Build initial pipeline scripts
+*   **Phase 2:** Core Conversational API (RAG - English)
+*   **Phase 3:** Basic Frontend Interface
+*   **Phase 4:** Multilingual Support & Enhanced NLP
+*   **Phase 5:** Scheme Matching & Personalization
+*   **Phase 6:** Image Understanding, Application Guidance & Deployment Prep
+*   **Phase 7:** Testing, Deployment & Iteration
 
-1.  **Phase 1: Foundation (Est. 2-3 weeks)**
-    *   [ ] PDF ingestion and processing pipeline (text extraction, OCR setup)
-    *   [ ] Basic vector database setup (schema, embedding storage)
-    *   [ ] Simple chat interface (frontend structure)
-    *   [ ] Basic LLM integration (API connection, simple prompt/response)
+## Known Issues/Next Steps
 
-2.  **Phase 2: Core Functionality (Est. 3-4 weeks)**
-    *   [ ] Image understanding module (feature extraction, basic classification)
-    *   [ ] Scheme matching service (hybrid search logic)
-    *   [ ] Enhanced conversational capabilities (RAG implementation, context handling)
-    *   [ ] Integration of Image Understanding with Scheme Matching
-
-3.  **Phase 3: Refinement (Est. 2-3 weeks)**
-    *   [ ] UI/UX improvements based on initial testing
-    *   [ ] Performance optimization (query speed, resource usage)
-    *   [ ] User testing and feedback integration loop setup
-    *   [ ] Basic deployment setup (Dockerfiles, Compose)
-
-## Known Issues
-
-*   N/A (No implementation yet)
+*   Need to set up the vector database (Task 1.4).
+*   Need to implement document chunking and embedding (Tasks 1.5, 1.6).
+*   OCR accuracy might need tuning depending on document quality.
