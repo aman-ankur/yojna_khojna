@@ -4,7 +4,7 @@ pdfplumber
 pytesseract
 Pillow
 weaviate-client
-langchain 
+langchain
 sentence-transformers 
 python-dotenv
 
