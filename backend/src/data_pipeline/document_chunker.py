@@ -3,7 +3,9 @@ from typing import List, Tuple, Optional
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from ..schemas import DocumentChunk  # Assuming a schema file exists or will be created
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Use getLogger instead, configuration is handled centrally
+logger = logging.getLogger(__name__)
 
 # Configuration for chunking
 CHUNK_SIZE = 1000  # Target size of each chunk (in characters)
@@ -23,7 +25,8 @@ def chunk_text(extracted_data: List[Tuple[int, str]], document_id: str) -> List[
         Returns an empty list if input is empty or an error occurs.
     """
     if not extracted_data:
-        logging.warning("Received empty extracted data for chunking.")
+        # logging.warning("Received empty extracted data for chunking.")
+        logger.warning("Received empty extracted data for chunking.") # Use logger instance
         return []
 
     all_chunks: List[DocumentChunk] = []
@@ -35,12 +38,14 @@ def chunk_text(extracted_data: List[Tuple[int, str]], document_id: str) -> List[
         separators=["\n\n", "\n", ". ", " ", ""] # Prioritized list of separators
     )
 
-    logging.info(f"Starting chunking process for document_id: {document_id}")
+    # logging.info(f"Starting chunking process for document_id: {document_id}")
+    logger.info(f"Starting chunking process for document_id: {document_id}") # Use logger instance
     total_pages = len(extracted_data)
 
     for page_num, page_text in extracted_data:
         if not page_text or page_text.isspace():
-            logging.debug(f"Skipping empty page {page_num} for document_id: {document_id}")
+            # logging.debug(f"Skipping empty page {page_num} for document_id: {document_id}")
+            logger.debug(f"Skipping empty page {page_num} for document_id: {document_id}") # Use logger instance
             continue
 
         try:
@@ -69,13 +74,16 @@ def chunk_text(extracted_data: List[Tuple[int, str]], document_id: str) -> List[
                 )
                 all_chunks.append(document_chunk)
 
-            logging.debug(f"Page {page_num} (doc: {document_id}) split into {num_chunks_on_page} chunks.")
+            # logging.debug(f"Page {page_num} (doc: {document_id}) split into {num_chunks_on_page} chunks.")
+            logger.debug(f"Page {page_num} (doc: {document_id}) split into {num_chunks_on_page} chunks.") # Use logger instance
 
         except Exception as e:
-            logging.error(f"Error chunking page {page_num} for document_id: {document_id}: {e}", exc_info=True)
+            # logging.error(f"Error chunking page {page_num} for document_id: {document_id}: {e}", exc_info=True)
+            logger.error(f"Error chunking page {page_num} for document_id: {document_id}: {e}", exc_info=True) # Use logger instance
             # Decide whether to skip the page or halt processing
 
-    logging.info(f"Completed chunking for document_id: {document_id}. Total chunks created: {len(all_chunks)}")
+    # logging.info(f"Completed chunking for document_id: {document_id}. Total chunks created: {len(all_chunks)}")
+    logger.info(f"Completed chunking for document_id: {document_id}. Total chunks created: {len(all_chunks)}") # Use logger instance
     return all_chunks
 
 # Example of a Pydantic schema (adjust as needed)

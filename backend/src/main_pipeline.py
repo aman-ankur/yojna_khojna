@@ -3,6 +3,10 @@ from pathlib import Path
 from typing import Optional, List
 import sys # Import sys for exit
 
+# Setup Logging FIRST
+from .logging_config import setup_logging
+setup_logging() # Apply logging configuration
+
 # Import pipeline functions & schemas
 from .data_pipeline.pdf_extractor import extract_text_from_pdf # Assuming this has basic error handling
 from .data_pipeline.document_chunker import chunk_text # Assuming this has basic error handling
@@ -22,7 +26,7 @@ from .exceptions import (
     WeaviateStorageError
 )
 
-# Get logger instance - logging is configured in config.py
+# Get logger instance - logging is now configured via setup_logging()
 logger = logging.getLogger(__name__)
 # Removed old basicConfig call
 
