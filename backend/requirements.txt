@@ -6,3 +6,4 @@ Pillow
 weaviate-client
 langchain 
 sentence-transformers 
+python-dotenv 
