@@ -1,28 +1,31 @@
 # Active Context
 
 ## Current Goal
-Implement Phase 1, Task 1.6: Embedding Generation for document chunks.
+Transitioning to Task 1.8: Configuration Management after successfully implementing embedding generation and Weaviate storage.
 
 ## Focus Areas
-*   Selecting an appropriate text embedding model (considering performance, cost, and language support).
-*   Creating `embedding_generator.py` module.
-*   Integrating the embedding step into `main_pipeline.py`.
-*   Adding necessary libraries (e.g., `sentence-transformers`) to `requirements.txt`.
+*   Refining the data pipeline for robustness.
+*   Setting up configuration loading (env vars/config file).
+*   Planning for Task 2 (Search API).
 
 ## Recent Activity
-*   Completed Task 1.5: Document Chunking.
-    *   Implemented `document_chunker.py` using `RecursiveCharacterTextSplitter`.
-    *   Defined `DocumentChunk` schema in `schemas.py`.
-    *   Created `main_pipeline.py` to orchestrate PDF extraction and chunking.
-    *   Successfully tested the pipeline integration.
+*   Completed Task 1.6: Embedding Generation.
+    *   Chose local Sentence Transformer model (`paraphrase-multilingual-mpnet-base-v2`).
+    *   Added `sentence-transformers` to `requirements.txt`.
+    *   Updated `DocumentChunk` schema in `schemas.py` to include `embedding` field.
+    *   Implemented `embedding_generator.py`.
+    *   Integrated into `main_pipeline.py`.
+*   Completed Task 1.7: Vector DB Storage.
+    *   Implemented `vector_db/weaviate_client.py` using Weaviate client v4.
+    *   Added functions for connection, schema creation (`YojnaChunk` collection), and batch import.
+    *   Integrated Weaviate storage step into `main_pipeline.py`.
+    *   Successfully tested the full pipeline including PDF processing, embedding, and Weaviate storage.
 *   Updated progress documentation.
 
 ## Blockers
 *   None currently.
 
 ## Next Steps
-1.  Discuss and decide on the embedding model.
-2.  Add the chosen embedding library to `requirements.txt`.
-3.  Implement the `generate_embeddings` function.
-4.  Modify `main_pipeline.py` to call the embedding function.
-5.  Test the embedding generation.
+1.  Implement Task 1.8: Configuration Management.
+2.  Enhance error handling and logging (Task 1.9).
+3.  Begin planning/implementation of Task 2: Semantic Search API.

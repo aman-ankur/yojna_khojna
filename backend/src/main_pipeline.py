@@ -7,6 +7,8 @@ from .data_pipeline.pdf_extractor import extract_text_from_pdf
 from .data_pipeline.document_chunker import chunk_text
 from .data_pipeline.embedding_generator import generate_embeddings
 from .schemas import DocumentChunk # Assuming schemas.py is in the same directory (src)
+# Import Weaviate client functions
+from .vector_db.weaviate_client import get_weaviate_client, ensure_schema_exists, batch_import_chunks
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -111,6 +113,31 @@ if __name__ == '__main__':
 
             if len(generated_chunks) > 3:
                 print("\n ... [additional chunks not shown] ...")
+
+            # --- Weaviate Integration --- #
+            print("\n--- Attempting to store results in Weaviate --- ")
+            weaviate_client = get_weaviate_client() # Use default URL from weaviate_client.py
+            try:
+                if weaviate_client:
+                    # Ensure the schema (class) exists in Weaviate
+                    ensure_schema_exists(weaviate_client)
+
+                    # Filter chunks that actually have embeddings (should be all if model worked)
+                    chunks_to_import = [chunk for chunk in generated_chunks if chunk.embedding is not None]
+
+                    if chunks_to_import:
+                        # Import the chunks into Weaviate
+                        batch_import_chunks(weaviate_client, chunks_to_import)
+                    else:
+                        print("No chunks with embeddings found to import.")
+                else:
+                    print("Failed to connect to Weaviate. Skipping data import.")
+            finally:
+                if weaviate_client:
+                    weaviate_client.close()
+                    print("Weaviate client connection closed.")
+            # --- End Weaviate Integration --- #
+
         else:
             print(f"\n--- Processing Failed for {test_pdf_to_process.name} --- ")
             print(" Check logs for error details.") 
