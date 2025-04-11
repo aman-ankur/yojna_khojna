@@ -88,7 +88,7 @@ def ensure_schema_exists(client: weaviate.WeaviateClient):
 
         # Define vector index config using wvc constants
         vector_index_config = wvc.config.Configure.VectorIndex.hnsw(
-            distance_metric=wvc.config.DistanceMetric.COSINE, # v4 uses constants here now
+            distance_metric=wvc.config.VectorDistances.COSINE, # v4 uses constants here now
             ef_construction=128,
             max_connections=16
         )
