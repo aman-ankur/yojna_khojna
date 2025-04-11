@@ -38,11 +38,11 @@
 *   [x] **1.8: Configuration Management** - Load settings (paths, model names, DB URLs) from env vars or config file.
     *   Implemented using `python-dotenv` in `config.py`.
     *   Loads `WEAVIATE_URL`, `EMBEDDING_MODEL_NAME`, `DEFAULT_TEST_PDF` with defaults.
-*   [~] **1.9: Error Handling & Logging** - Enhance robustness and logging across the pipeline.
+*   [x] **1.9: Error Handling & Logging** - Enhance robustness and logging across the pipeline.
     *   Custom exceptions defined and used (`exceptions.py`).
     *   Key functions raise specific errors.
     *   Main pipeline includes `try...except` blocks for different stages.
-    *   Loggers used in main modules, but setup needs centralization (remove `basicConfig` calls from submodules).
+    *   Logging centralized via `logging_config.py` and `dictConfig`. Removed `basicConfig` calls.
 *   [x] **1.10: Testing** - Add more comprehensive unit and integration tests.
     *   Fixed issues with Weaviate client tests (updated to use VectorDistances instead of DistanceMetric).
     *   Enhanced embedding_generator tests with cases for mixed languages, empty text, and dimensionality checks.
@@ -52,7 +52,6 @@
 
 **Current / Next Task:**
 
-*   [ ] **1.9a: Refine Logging Setup:** Centralize logging configuration, remove `basicConfig` from submodules.
 *   [ ] **2.1: Basic API Endpoint (FastAPI):** (Renumbered from previous 1.8)
     *   Set up a basic FastAPI application.
     *   Create an endpoint `/process-pdf` that takes a PDF file, runs the full pipeline (extract, chunk, embed, load), and returns status.

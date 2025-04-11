@@ -14,7 +14,7 @@ This document outlines the planned phases for developing the AI-Powered Governme
     6.  [X] Implement text embedding (Hugging Face) and store vectors/metadata.
     7.  [X] Build initial pipeline scripts.
     8.  [X] Implement configuration management (via `.env`).
-    9.  [~] Enhance error handling & logging (Error handling good, logging needs centralization).
+    9.  [X] Enhance error handling & logging (Centralized logging config).
     10. [X] Implement comprehensive testing (unit, integration).
 *   **Outcome:** A functional pipeline to process documents and populate a vector DB for semantic search.
 
@@ -22,14 +22,13 @@ This document outlines the planned phases for developing the AI-Powered Governme
 
 *   **Goal:** Create the backend API endpoint for RAG-based Q&A (English first).
 *   **Key Tasks:**
-    1.  Refine Logging Setup (Task 1.9a).
-    2.  Set up FastAPI project.
-    3.  Integrate LangChain for RAG.
-    4.  Connect LangChain to the vector DB.
-    5.  Integrate with an LLM API (OpenAI/Anthropic).
-    6.  Build the core RAG chain.
-    7.  Create a `/chat` API endpoint in FastAPI.
-    8.  Set up Redis (via Docker) for session state.
+    1.  [ ] Set up FastAPI project.
+    2.  [ ] Integrate LangChain for RAG.
+    3.  [ ] Connect LangChain to the vector DB.
+    4.  [ ] Integrate with an LLM API (OpenAI/Anthropic).
+    5.  [ ] Build the core RAG chain.
+    6.  [ ] Create a `/chat` API endpoint in FastAPI.
+    7.  [ ] Set up Redis (via Docker) for session state.
 *   **Outcome:** A working backend API answering English questions via RAG.
 
 **Phase 3: Basic Frontend Interface**
