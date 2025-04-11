@@ -6,4 +6,8 @@ Pillow
 weaviate-client
 langchain 
 sentence-transformers 
-python-dotenv 
+python-dotenv
+
+# Testing
+pytest
+pytest-mock 
