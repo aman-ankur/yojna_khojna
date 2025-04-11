@@ -5,13 +5,14 @@ from typing import Optional, List
 # Import functions from our data pipeline modules
 from .data_pipeline.pdf_extractor import extract_text_from_pdf
 from .data_pipeline.document_chunker import chunk_text
+from .data_pipeline.embedding_generator import generate_embeddings
 from .schemas import DocumentChunk # Assuming schemas.py is in the same directory (src)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def process_pdf(pdf_path: Path) -> Optional[List[DocumentChunk]]:
     """
-    Processes a single PDF file: extracts text and chunks it.
+    Processes a single PDF file: extracts text, chunks it, and generates embeddings.
 
     Args:
         pdf_path: The path to the PDF file.
@@ -45,7 +46,19 @@ def process_pdf(pdf_path: Path) -> Optional[List[DocumentChunk]]:
         # Decide if this is an error or acceptable state - returning chunks for now
 
     logging.info(f"Successfully generated {len(chunks)} chunks for document {document_id}.")
-    return chunks
+
+    # 3. Generate Embeddings for the chunks
+    try:
+        chunks_with_embeddings = generate_embeddings(chunks)
+        # Check if embeddings were actually added (model might have failed to load)
+        if chunks_with_embeddings and chunks_with_embeddings[0].embedding is not None:
+            logging.info(f"Successfully generated embeddings for {len(chunks_with_embeddings)} chunks.")
+        else:
+            logging.warning(f"Embeddings were not generated for document {document_id}. Check logs for model loading issues.")
+        return chunks_with_embeddings # Return chunks potentially with embeddings
+    except Exception as e:
+        logging.error(f"Failed during embedding generation for {document_id}: {e}", exc_info=True)
+        return chunks # Return original chunks if embedding fails
 
 
 if __name__ == '__main__':
@@ -56,9 +69,9 @@ if __name__ == '__main__':
     # Make sure the test_docs folder exists relative to where you run the script
     # or provide an absolute path.
     # Running this script from the 'backend' directory means the path is relative to 'backend'
-    test_pdf_to_process = Path("./test_docs/small_awaas_yojna.pdf") # Example path relative to backend dir
+    # test_pdf_to_process = Path("./../test_docs/small_awaas_yojna.pdf") # Example path relative to backend dir
     # Alternative: Absolute Path
-    # test_pdf_to_process = Path("/Users/aankur/workspace/yojna_khojna/test_docs/small_awaas_yojna.pdf")
+    test_pdf_to_process = Path("/Users/aankur/workspace/yojna_khojna/backend/test_docs/small_awaas_yojna.pdf")
     # --- End Configuration --- #
 
     # Create test_docs directory if it doesn't exist (relative to workspace root)
@@ -89,7 +102,13 @@ if __name__ == '__main__':
             for i, chunk in enumerate(generated_chunks[:3]): # Print first 3 chunks
                 print(f"\n Chunk {i+1} (ID: {chunk.chunk_id}) ")
                 print(f" Page: {chunk.metadata.get('page_number')}")
-                print(f" Text: '{chunk.text[:150]}...'" ) # Show start of text
+                print(f" Text: '{chunk.text[:100]}...'" ) # Show start of text
+                # Check and display embedding info
+                if chunk.embedding:
+                    print(f" Embedding: Generated (Dim: {len(chunk.embedding)}, First 5: {chunk.embedding[:5]})")
+                else:
+                    print(f" Embedding: Not generated")
+
             if len(generated_chunks) > 3:
                 print("\n ... [additional chunks not shown] ...")
         else:
