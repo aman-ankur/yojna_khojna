@@ -35,16 +35,28 @@
     *   Implement `weaviate_loader.py` to connect to Weaviate.
     *   Define Weaviate schema for storing chunks and vectors.
     *   Load `DocumentChunk` objects and their embeddings into Weaviate.
-*   [ ] **1.8: Configuration Management** - Load settings (paths, model names, DB URLs) from env vars or config file.
-*   [ ] **1.9: Error Handling & Logging** - Enhance robustness and logging across the pipeline.
-*   [ ] **1.10: Testing** - Add more comprehensive unit and integration tests.
+*   [x] **1.8: Configuration Management** - Load settings (paths, model names, DB URLs) from env vars or config file.
+    *   Implemented using `python-dotenv` in `config.py`.
+    *   Loads `WEAVIATE_URL`, `EMBEDDING_MODEL_NAME`, `DEFAULT_TEST_PDF` with defaults.
+*   [~] **1.9: Error Handling & Logging** - Enhance robustness and logging across the pipeline.
+    *   Custom exceptions defined and used (`exceptions.py`).
+    *   Key functions raise specific errors.
+    *   Main pipeline includes `try...except` blocks for different stages.
+    *   Loggers used in main modules, but setup needs centralization (remove `basicConfig` calls from submodules).
+*   [x] **1.10: Testing** - Add more comprehensive unit and integration tests.
+    *   Fixed issues with Weaviate client tests (updated to use VectorDistances instead of DistanceMetric).
+    *   Enhanced embedding_generator tests with cases for mixed languages, empty text, and dimensionality checks.
+    *   Added integration tests for the full pipeline from document chunks to embeddings to vector storage.
+    *   Created test scaffolding for future search functionality.
+    *   Added proper pytest configuration with custom markers.
 
 **Current / Next Task:**
 
-*   [ ] **1.8: Basic API Endpoint (FastAPI):**
+*   [ ] **1.9a: Refine Logging Setup:** Centralize logging configuration, remove `basicConfig` from submodules.
+*   [ ] **2.1: Basic API Endpoint (FastAPI):** (Renumbered from previous 1.8)
     *   Set up a basic FastAPI application.
     *   Create an endpoint `/process-pdf` that takes a PDF file, runs the full pipeline (extract, chunk, embed, load), and returns status.
-*   [ ] **1.9: Initial Testing and Refinement:**
+*   [ ] **2.2: Initial Testing and Refinement:** (Renumbered from previous 1.9)
     *   Test the end-to-end pipeline with various PDFs.
     *   Refine chunking parameters, error handling, and logging.
 
