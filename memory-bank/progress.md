@@ -27,20 +27,20 @@
     *   Defined `DocumentChunk` schema in `schemas.py`.
     *   Created `main_pipeline.py` to orchestrate extraction and chunking.
     *   Tested chunking logic and pipeline integration.
-
-**Current / Next Task:**
-
-*   [ ] **1.6: Embedding Generation:**
+*   [x] **1.6: Embedding Generation:**
     *   Choose an embedding model (e.g., Sentence Transformers, OpenAI API).
     *   Implement function in `embedding_generator.py` to generate vector embeddings for `DocumentChunk` text.
     *   Add necessary dependencies to `requirements.txt`.
-
-**Upcoming Tasks (Phase 1):**
-
-*   [ ] **1.7: Data Loading into Weaviate:**
+*   [x] **1.7: Data Loading into Weaviate:**
     *   Implement `weaviate_loader.py` to connect to Weaviate.
     *   Define Weaviate schema for storing chunks and vectors.
     *   Load `DocumentChunk` objects and their embeddings into Weaviate.
+*   [ ] **1.8: Configuration Management** - Load settings (paths, model names, DB URLs) from env vars or config file.
+*   [ ] **1.9: Error Handling & Logging** - Enhance robustness and logging across the pipeline.
+*   [ ] **1.10: Testing** - Add more comprehensive unit and integration tests.
+
+**Current / Next Task:**
+
 *   [ ] **1.8: Basic API Endpoint (FastAPI):**
     *   Set up a basic FastAPI application.
     *   Create an endpoint `/process-pdf` that takes a PDF file, runs the full pipeline (extract, chunk, embed, load), and returns status.
