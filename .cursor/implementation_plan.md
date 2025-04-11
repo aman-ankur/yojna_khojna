@@ -6,13 +6,13 @@ This document outlines the planned phases for developing the AI-Powered Governme
 
 *   **Goal:** Ingest government scheme documents, process them, and create a searchable knowledge base.
 *   **Key Tasks:**
-    1.  Set up the Python backend environment.
-    2.  Implement PDF ingestion and text extraction (`PyPDF2`/`pdfplumber`).
-    3.  Integrate Tesseract OCR (with Hindi support).
-    4.  Set up a vector database (e.g., Weaviate/Pinecone via Docker).
-    5.  Implement document chunking.
-    6.  Implement text embedding (Hugging Face) and store vectors/metadata.
-    7.  Build initial pipeline scripts.
+    1.  [X] Set up the Python backend environment.
+    2.  [X] Implement PDF ingestion and text extraction (`pdfplumber`).
+    3.  [X] Integrate Tesseract OCR (with Hindi support).
+    4.  [X] Set up a vector database (Weaviate via Docker).
+    5.  [ ] Implement document chunking.
+    6.  [ ] Implement text embedding (Hugging Face) and store vectors/metadata.
+    7.  [ ] Build initial pipeline scripts.
 *   **Outcome:** A functional pipeline to process documents and populate a vector DB for semantic search.
 
 **Phase 2: Core Conversational API (RAG - English)**

@@ -2,15 +2,18 @@
 
 ## Current Status
 
-*   **Phase 1 In Progress:** Foundational data pipeline work has started.
-*   **Backend Setup:** Python backend environment (`backend/yojna`) initialized with core dependencies.
-*   **PDF Processing:** Initial implementation for PDF text extraction with OCR fallback (using `pdfplumber` and `pytesseract`) is complete.
-*   **Foundation:** Core documentation (Memory Bank) updated with implementation plan and project rules.
+*   **Phase 1 In Progress:** Foundational data pipeline setup ongoing.
+*   **Backend Setup:** Python backend environment (`backend/yojna`) initialized.
+*   **PDF Processing:** PDF text extraction with OCR fallback complete.
+*   **Vector Database:** Weaviate instance set up and running via Docker Compose (`docker-compose.yml`).
+*   **Dependencies:** Added `weaviate-client` to `backend/requirements.txt`.
+*   **Documentation:** Core documentation (Memory Bank, .cursor, README) updated.
 
 ## What Works
 
-*   Python script (`backend/src/data_pipeline/pdf_extractor.py`) can extract text from both text-based and image-based PDFs (English & Hindi) using direct extraction and Tesseract OCR fallback.
-*   Basic backend project structure is in place.
+*   PDF extraction script (`backend/src/data_pipeline/pdf_extractor.py`) handles text/image PDFs (Eng/Hin).
+*   Local Weaviate vector database runs via `docker compose up -d`.
+*   Backend project structure initiated.
 
 ## What's Left to Build (Implementation Plan Summary)
 
@@ -18,10 +21,10 @@
     *   [X] Set up Python backend environment
     *   [X] Implement PDF ingestion and text extraction (`pdfplumber`)
     *   [X] Integrate Tesseract OCR (with Hindi support)
-    *   [ ] Set up vector database (Weaviate/Pinecone)
-    *   [ ] Implement document chunking
-    *   [ ] Implement text embedding (Hugging Face) and storage
-    *   [ ] Build initial pipeline scripts
+    *   [X] Set up vector database (Weaviate via Docker)
+    *   [ ] Implement document chunking (using LangChain)
+    *   [ ] Implement text embedding (Hugging Face) and storage in Weaviate
+    *   [ ] Build initial pipeline script to orchestrate extraction, chunking, embedding, and storage
 *   **Phase 2:** Core Conversational API (RAG - English)
 *   **Phase 3:** Basic Frontend Interface
 *   **Phase 4:** Multilingual Support & Enhanced NLP
@@ -31,6 +34,7 @@
 
 ## Known Issues/Next Steps
 
-*   Need to set up the vector database (Task 1.4).
-*   Need to implement document chunking and embedding (Tasks 1.5, 1.6).
-*   OCR accuracy might need tuning depending on document quality.
+*   Next technical step: Implement document chunking (Task 1.5).
+*   Need to implement text embedding and storage in Weaviate (Task 1.6).
+*   Need to build the overall data pipeline orchestration script (Task 1.7).
+*   OCR accuracy might need further tuning based on diverse documents.
