@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  weaviate:
+    image: semitechnologies/weaviate:latest # Use the latest Weaviate image
+    container_name: weaviate_db
+    ports:
+      - "8080:8080"  # RESTful API
+      - "50051:50051" # gRPC API
+    volumes:
+      - weaviate_data:/var/lib/weaviate # Mount a Docker volume for persistence
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true' # Allow anonymous access (for local dev)
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'      # Internal path where data is stored
+      DEFAULT_VECTORIZER_MODULE: 'none'              # We'll handle vectorization in our Python code
+      ENABLE_MODULES: ''                             # Explicitly disable any default text2vec modules
+      CLUSTER_HOSTNAME: 'node1'                      # Basic setting for single node
+    restart: on-failure:0 # Don't restart automatically on failure during development
+
+volumes:
+  weaviate_data:
+    driver: local # Use the local driver for the volume 
