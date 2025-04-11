@@ -1,23 +1,28 @@
-# Active Context: AI-Powered Government Scheme Assistant (Initialization)
+# Active Context
 
-## Current Focus
+## Current Goal
+Implement Phase 1, Task 1.6: Embedding Generation for document chunks.
 
-*   **Project Initiation:** Establishing the core project structure and documentation (Memory Bank).
-*   **Documentation Foundation:** Capturing the initial Product Requirements (PRD) and Proof of Concept (POC) Technical Architecture ideas into the Memory Bank files (`projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md`).
-*   **Preparation for POC:** Defining the initial scope and plan for the POC development based on the outlined phases in the technical specification.
+## Focus Areas
+*   Selecting an appropriate text embedding model (considering performance, cost, and language support).
+*   Creating `embedding_generator.py` module.
+*   Integrating the embedding step into `main_pipeline.py`.
+*   Adding necessary libraries (e.g., `sentence-transformers`) to `requirements.txt`.
 
-## Recent Changes
+## Recent Activity
+*   Completed Task 1.5: Document Chunking.
+    *   Implemented `document_chunker.py` using `RecursiveCharacterTextSplitter`.
+    *   Defined `DocumentChunk` schema in `schemas.py`.
+    *   Created `main_pipeline.py` to orchestrate PDF extraction and chunking.
+    *   Successfully tested the pipeline integration.
+*   Updated progress documentation.
 
-*   Created the initial set of Memory Bank core files based on user-provided PRD and Tech Spec documents.
+## Blockers
+*   None currently.
 
-## Next Steps (Immediate)
-
-1.  Create the initial `progress.md` file to reflect the starting point and planned POC phases.
-2.  Create the initial `.clinerules` file (empty for now, to be populated as patterns emerge).
-3.  Await further instructions to begin POC development (Phase 1: Foundation).
-
-## Active Decisions & Considerations
-
-*   The project will start with a POC focusing on core functionality (Document Processing, Basic QA, Conversational Interface, Image Understanding, Scheme Matching) as outlined in the technical specification.
-*   The initial target platform is a web application (PWA).
-*   Technology choices are based on the POC technical architecture document (`techContext.md`).
+## Next Steps
+1.  Discuss and decide on the embedding model.
+2.  Add the chosen embedding library to `requirements.txt`.
+3.  Implement the `generate_embeddings` function.
+4.  Modify `main_pipeline.py` to call the embedding function.
+5.  Test the embedding generation.
