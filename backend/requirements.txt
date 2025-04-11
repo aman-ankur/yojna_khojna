@@ -4,6 +4,10 @@ pdfplumber
 pytesseract
 Pillow
 weaviate-client
-langchain 
+langchain
 sentence-transformers 
-python-dotenv 
+python-dotenv
+
+# Testing
+pytest
+pytest-mock 

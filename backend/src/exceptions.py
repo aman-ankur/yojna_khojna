@@ -36,4 +36,8 @@ class WeaviateStorageError(WeaviateError):
     """Exception raised for errors during data storage in Weaviate."""
     def __init__(self, message, failed_objects=None):
         super().__init__(message)
-        self.failed_objects = failed_objects # Optionally store details about failed batch items 
+        self.failed_objects = failed_objects # Optionally store details about failed batch items
+
+class WeaviateQueryError(WeaviateError):
+    """Exception raised for errors during query operations in Weaviate."""
+    pass 
