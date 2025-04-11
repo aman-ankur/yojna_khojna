@@ -9,6 +9,8 @@ from .data_pipeline.embedding_generator import generate_embeddings
 from .schemas import DocumentChunk # Assuming schemas.py is in the same directory (src)
 # Import Weaviate client functions
 from .vector_db.weaviate_client import get_weaviate_client, ensure_schema_exists, batch_import_chunks
+# Import config loading function
+from . import config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -67,33 +69,28 @@ if __name__ == '__main__':
     print("Main Data Pipeline Runner")
 
     # --- Configuration --- #
-    # IMPORTANT: Update this path to point to a real PDF file in your test_docs folder
-    # Make sure the test_docs folder exists relative to where you run the script
-    # or provide an absolute path.
-    # Running this script from the 'backend' directory means the path is relative to 'backend'
-    # test_pdf_to_process = Path("./../test_docs/small_awaas_yojna.pdf") # Example path relative to backend dir
-    # Alternative: Absolute Path
-    test_pdf_to_process = Path("/Users/aankur/workspace/yojna_khojna/backend/test_docs/small_awaas_yojna.pdf")
+    # Get test PDF path from config
+    test_pdf_to_process = config.get_default_test_pdf_path()
+    print(f"Using test PDF path from config: {test_pdf_to_process}")
     # --- End Configuration --- #
 
-    # Create test_docs directory if it doesn't exist (relative to workspace root)
-    workspace_root = Path(__file__).parent.parent # Get workspace root assuming structure proj/backend/src
-    test_docs_dir = workspace_root / "test_docs"
+    # Create test_docs directory if it doesn't exist (relative to backend directory)
+    # Assuming config path is relative to backend dir, so this logic is okay
+    test_docs_dir = test_pdf_to_process.parent
     if not test_docs_dir.exists():
-        logging.info(f"Creating directory: {test_docs_dir}")
-        test_docs_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            logging.info(f"Creating directory: {test_docs_dir}")
+            test_docs_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            logging.error(f"Failed to create directory {test_docs_dir}: {e}")
+            # Optionally exit or handle more gracefully
 
+    # Check if the configured test PDF exists
     if not test_pdf_to_process.exists():
-        # Check relative to workspace root if not found relative to backend
-        relative_to_workspace_path = workspace_root / test_pdf_to_process.name
-        if relative_to_workspace_path.exists():
-            test_pdf_to_process = relative_to_workspace_path
-        else:
-             print(f"\n--- ERROR ---")
-             print(f"Test PDF file not found at the specified path: {test_pdf_to_process}")
-             print(f"Please ensure the file exists or update the 'test_pdf_to_process' variable in the script.")
-             print(f"Also looked for: {relative_to_workspace_path}")
-             print(f"Make sure the 'test_docs' directory exists and contains your test PDF.")
+        print(f"\n--- ERROR ---")
+        print(f"Test PDF file configured in .env (DEFAULT_TEST_PDF) not found at: {test_pdf_to_process}")
+        print(f"Please ensure the file exists or update the path in your .env file.")
+        print(f"If the path in .env is relative, it should be relative to the 'backend' directory.")
     else:
         print(f"\nAttempting to process PDF: {test_pdf_to_process}")
         generated_chunks = process_pdf(test_pdf_to_process)
@@ -116,7 +113,8 @@ if __name__ == '__main__':
 
             # --- Weaviate Integration --- #
             print("\n--- Attempting to store results in Weaviate --- ")
-            weaviate_client = get_weaviate_client() # Use default URL from weaviate_client.py
+            # get_weaviate_client now uses config internally
+            weaviate_client = get_weaviate_client()
             try:
                 if weaviate_client:
                     # Ensure the schema (class) exists in Weaviate

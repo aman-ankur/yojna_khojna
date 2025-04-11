@@ -3,18 +3,22 @@ from typing import List
 from sentence_transformers import SentenceTransformer
 from ..schemas import DocumentChunk
 import numpy as np
+from .. import config # Import the config module
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load the model only once when the module is loaded
-# Using a multilingual model suitable for Hindi and English
+model = None # Initialize model as None
+model_name = config.EMBEDDING_MODEL_NAME # Get model name from config
+
 try:
-    model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')
-    logging.info("Sentence Transformer model loaded successfully.")
+    logging.info(f"Loading Sentence Transformer model: {model_name}")
+    model = SentenceTransformer(model_name)
+    logging.info(f"Sentence Transformer model '{model_name}' loaded successfully.")
 except Exception as e:
-    logging.error(f"Failed to load Sentence Transformer model: {e}")
-    model = None
+    logging.error(f"Failed to load Sentence Transformer model '{model_name}': {e}")
+    # model remains None
 
 def generate_embeddings(chunks: List[DocumentChunk]) -> List[DocumentChunk]:
     """

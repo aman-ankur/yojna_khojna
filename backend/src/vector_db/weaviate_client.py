@@ -5,41 +5,60 @@ from typing import List, Optional, Dict, Any
 # Removed v3 Client import
 from weaviate.exceptions import UnexpectedStatusCodeException # Keep for potential http errors, though API errors are different now
 from ..schemas import DocumentChunk
+from .. import config # Import the config module
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- Configuration --- (Ideally, use environment variables)
-WEAVIATE_URL = "http://localhost:8080" # Default for local Docker setup
-# Consider adding gRPC port if different, e.g., 50051
+# --- Configuration (Constants within this module) ---
 CLASS_NAME = "YojnaChunk" # Name for the Weaviate collection
-VECTOR_DIMENSION = 768 # Dimension of paraphrase-multilingual-mpnet-base-v2 embeddings
+# VECTOR_DIMENSION could also be loaded from config if models change often
 
-def get_weaviate_client(url: str = WEAVIATE_URL) -> Optional[weaviate.WeaviateClient]: # Return type changed to v4 client
-    """Connects to the Weaviate instance using v4 syntax.
-
-    Args:
-        url: The HTTP URL of the Weaviate instance.
-             Note: gRPC port might be needed depending on connection method.
+def get_weaviate_client() -> Optional[weaviate.WeaviateClient]: # Removed url parameter
+    """Connects to the Weaviate instance using v4 syntax and config URL.
 
     Returns:
         A WeaviateClient object or None if connection fails.
     """
+    weaviate_url = config.WEAVIATE_URL # Get URL from config
+    logging.info(f"Attempting to connect to Weaviate at {weaviate_url}...")
     try:
-        # Using connect_to_local for simplicity, assumes default ports
-        # For custom URLs/ports/auth, use weaviate.connect_to_custom(...)
-        # Example: client = weaviate.connect_to_custom(http_host="localhost", http_port=8080, http_secure=False, grpc_host="localhost", grpc_port=50051)
-        client = weaviate.connect_to_local() # Simplified connection for default localhost:8080
+        # Using connect_to_local assumes default gRPC port (50051). If your URL is different
+        # or needs auth, use connect_to_custom.
+        if weaviate_url == "http://localhost:8080":
+             client = weaviate.connect_to_local()
+        else:
+             # Basic custom connection - assumes http, no auth. Add more params if needed.
+             # Need to parse URL to get host/port potentially
+             from urllib.parse import urlparse
+             parsed_url = urlparse(weaviate_url)
+             host = parsed_url.hostname
+             port = parsed_url.port
+             http_secure = parsed_url.scheme == 'https'
+             # Assuming default gRPC port mapping if not localhost
+             grpc_port = 50051 if host != "localhost" else 50051
+
+             logging.warning(f"Connecting to custom Weaviate URL. Assuming gRPC on port {grpc_port}. Adjust code if needed.")
+             client = weaviate.connect_to_custom(
+                 http_host=host,
+                 http_port=port,
+                 http_secure=http_secure,
+                 grpc_host=host, # Assuming gRPC host is the same
+                 grpc_port=grpc_port,
+                 grpc_secure=False # Assuming non-secure gRPC for non-localhost, adjust if needed
+                 # Add auth credentials if required: auth_client_secret=...
+             )
+
         client.connect()
 
         if client.is_ready():
-            logging.info(f"Successfully connected to Weaviate (using v4 client)")
+            logging.info(f"Successfully connected to Weaviate at {weaviate_url} (using v4 client)")
             return client
         else:
-            logging.error(f"Weaviate (v4 client) at {url} is not ready.")
+            logging.error(f"Weaviate (v4 client) at {weaviate_url} is not ready.")
             client.close()
             return None
     except Exception as e:
-        logging.error(f"Failed to connect to Weaviate (v4 client) at {url}: {e}", exc_info=True)
+        logging.error(f"Failed to connect to Weaviate (v4 client) at {weaviate_url}: {e}", exc_info=True)
         return None
 
 def ensure_schema_exists(client: weaviate.WeaviateClient): # Type hint updated
@@ -142,7 +161,8 @@ def batch_import_chunks(client: weaviate.WeaviateClient, chunks: List[DocumentCh
 
 # Basic test connection (optional)
 if __name__ == '__main__':
-    print("Testing Weaviate v4 connection...")
+    print("Testing Weaviate v4 connection using config...")
+    # Test uses the URL from config now implicitly via get_weaviate_client()
     client = get_weaviate_client()
     if client:
         try:
@@ -154,4 +174,5 @@ if __name__ == '__main__':
             client.close() # Ensure client is closed after test
             print("Weaviate client closed.")
     else:
-        print("Connection failed. Ensure Weaviate is running at", WEAVIATE_URL) 
+        # Print the URL from config for debugging
+        print(f"Connection failed. Ensure Weaviate is running at {config.WEAVIATE_URL}") 
