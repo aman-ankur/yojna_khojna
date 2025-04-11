@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 
 class DocumentChunk(BaseModel):
     """
@@ -10,6 +10,7 @@ class DocumentChunk(BaseModel):
     document_id: str = Field(..., description="Identifier of the source document")
     text: str = Field(..., description="The actual text content of the chunk")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadata associated with the chunk (e.g., page number, chunk index)")
+    embedding: Optional[List[float]] = Field(default=None, description="Vector embedding of the text content")
 
 # You can add other data models (schemas) needed by your application here
 # For example:

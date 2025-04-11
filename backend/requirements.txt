@@ -5,3 +5,4 @@ pytesseract
 Pillow
 weaviate-client
 langchain 
+sentence-transformers 
