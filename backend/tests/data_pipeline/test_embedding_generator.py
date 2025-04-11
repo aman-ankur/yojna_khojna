@@ -97,3 +97,76 @@ def test_generate_embeddings_encode_error(mocker: MockerFixture, sample_chunks: 
 # Note: Testing the EmbeddingModelError raised at module load is tricky
 # because the error occurs when this test file imports the module.
 # A separate test strategy might be needed if explicitly testing that specific raise is critical. 
+
+# Test mixed language texts
+def test_generate_embeddings_mixed_languages(mocker: MockerFixture):
+    """Tests embedding generation with mixed language inputs."""
+    # Create chunks with various languages
+    mixed_chunks = [
+        DocumentChunk(chunk_id="d1_c1", document_id="d1", text="English text", metadata={'page_number': 1}),
+        DocumentChunk(chunk_id="d1_c2", document_id="d1", text="हिंदी टेक्स्ट", metadata={'page_number': 1}),
+        DocumentChunk(chunk_id="d1_c3", document_id="d1", text="English and हिंदी mixed", metadata={'page_number': 2}),
+    ]
+    
+    # Mock model with appropriate return dimensions
+    mock_model = MagicMock()
+    mock_embeddings = np.array([
+        [0.1, 0.2, 0.3],
+        [0.4, 0.5, 0.6],
+        [0.7, 0.8, 0.9]
+    ])
+    mock_model.encode.return_value = mock_embeddings
+    mocker.patch("backend.src.data_pipeline.embedding_generator.model", mock_model)
+    
+    # Generate embeddings
+    result = embedding_generator.generate_embeddings(mixed_chunks)
+    
+    # Verify embeddings were created for all chunks regardless of language
+    assert len(result) == 3
+    assert all(chunk.embedding is not None for chunk in result)
+    mock_model.encode.assert_called_once()
+
+# Test empty text handling
+def test_generate_embeddings_empty_text(mocker: MockerFixture):
+    """Tests handling of empty or whitespace-only text."""
+    empty_chunks = [
+        DocumentChunk(chunk_id="d1_c1", document_id="d1", text="", metadata={'page_number': 1}),
+        DocumentChunk(chunk_id="d1_c2", document_id="d1", text="   ", metadata={'page_number': 1}),
+    ]
+    
+    mock_model = MagicMock()
+    mock_embeddings = np.array([
+        [0.1, 0.2, 0.3],
+        [0.4, 0.5, 0.6],
+    ])
+    mock_model.encode.return_value = mock_embeddings
+    mocker.patch("backend.src.data_pipeline.embedding_generator.model", mock_model)
+    
+    result = embedding_generator.generate_embeddings(empty_chunks)
+    
+    # Verify empty text is handled properly
+    assert len(result) == 2
+    mock_model.encode.assert_called_once_with(["", "   "], show_progress_bar=True)
+
+# Test dimensionality consistency
+def test_embedding_dimensionality(mocker: MockerFixture):
+    """Tests that all generated embeddings have consistent dimensions."""
+    test_chunks = [
+        DocumentChunk(chunk_id="d1_c1", document_id="d1", text="Text 1", metadata={'page_number': 1}),
+        DocumentChunk(chunk_id="d1_c2", document_id="d1", text="Text 2", metadata={'page_number': 1}),
+    ]
+    
+    # Create embeddings with different dimensions
+    mock_model = MagicMock()
+    mock_embeddings = np.array([
+        np.random.rand(384),  # Typical dimension for many sentence transformers
+        np.random.rand(384)
+    ])
+    mock_model.encode.return_value = mock_embeddings
+    mocker.patch("backend.src.data_pipeline.embedding_generator.model", mock_model)
+    
+    result = embedding_generator.generate_embeddings(test_chunks)
+    
+    # Verify all embeddings have the same dimension
+    assert len(result[0].embedding) == len(result[1].embedding)
+    assert len(result[0].embedding) == 384 

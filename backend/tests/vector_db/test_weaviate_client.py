@@ -8,7 +8,7 @@ from weaviate.exceptions import WeaviateBaseError
 from weaviate.collections.classes.batch import BatchObjectReturn, ErrorObject
 
 from backend.src.schemas import DocumentChunk
-from backend.src.exceptions import WeaviateConnectionError, WeaviateSchemaError, WeaviateStorageError
+from backend.src.exceptions import WeaviateConnectionError, WeaviateSchemaError, WeaviateStorageError, WeaviateQueryError
 
 # Mock config before importing the module
 @pytest.fixture(scope="function", autouse=True)
@@ -215,4 +215,134 @@ def test_batch_import_chunks_weaviate_exception(mocker: MockerFixture, mock_weav
     with pytest.raises(WeaviateStorageError, match="DB connection lost"):
         weaviate_client.batch_import_chunks(mock_weaviate_client_v4, sample_chunks_with_embeddings)
 
-    mock_collection.data.insert_many.assert_called_once() 
+    mock_collection.data.insert_many.assert_called_once()
+
+# Test for vector similarity search
+@pytest.mark.skip(reason="Placeholder test for future functionality")
+def test_vector_similarity_search(mock_weaviate_client_v4):
+    """Tests vector similarity search functionality."""
+    # Mock query builder and response
+    mock_query_builder = mock_weaviate_client_v4.collections.get.return_value.query
+    
+    # Mock the near_vector method and its chain of query building
+    mock_near_vector = MagicMock()
+    mock_query_builder.near_vector.return_value = mock_near_vector
+    mock_with_limit = MagicMock() 
+    mock_near_vector.with_limit.return_value = mock_with_limit
+    
+    # Mock the final query object and results
+    mock_with_additional = MagicMock()
+    mock_with_limit.with_additional.return_value = mock_with_additional
+    
+    mock_query_response = MagicMock()
+    mock_query_response.objects = [
+        MagicMock(
+            properties={
+                "chunk_id": "test_chunk_1", 
+                "document_id": "test_doc", 
+                "text": "Sample text content"
+            },
+            metadata=MagicMock(certainty=0.85)
+        ),
+        MagicMock(
+            properties={
+                "chunk_id": "test_chunk_2", 
+                "document_id": "test_doc", 
+                "text": "More sample text"
+            },
+            metadata=MagicMock(certainty=0.75)
+        )
+    ]
+    mock_with_additional.do.return_value = mock_query_response
+    
+    # Create a vector for searching
+    query_vector = [0.1, 0.2, 0.3]
+    
+    # Mock the vector similarity search function - we need to implement or import this
+    # Since we don't have the actual function yet, we'll add a placeholder for the test
+    # This would typically be in the weaviate_client.py file
+    # vector_similarity_search = weaviate_client.vector_similarity_search
+    
+    # This is a placeholder for the assertion - the actual implementation 
+    # would call the vector_similarity_search function and verify the results
+    
+    # Example of what the implementation would look like:
+    """
+    results = vector_similarity_search(mock_weaviate_client_v4, query_vector, limit=2)
+    
+    assert len(results) == 2
+    assert results[0]["chunk_id"] == "test_chunk_1"
+    assert results[0]["score"] == 0.85
+    assert results[1]["chunk_id"] == "test_chunk_2" 
+    """
+    
+    # Until we implement the function, we'll just verify the mock setup works
+    collection = mock_weaviate_client_v4.collections.get.return_value
+    collection.query.near_vector.assert_not_called()
+
+# Test for handling malformed vector data during import
+def test_batch_import_malformed_vectors(mock_weaviate_client_v4, sample_chunks_with_embeddings):
+    """Tests handling of malformed vector data during batch import."""
+    chunks = sample_chunks_with_embeddings.copy()
+    
+    # Modify one of the embeddings to be malformed (wrong dimension)
+    chunks[1].embedding = [0.1]  # Too short
+    
+    # Set up the mock to simulate a batch error
+    collection = mock_weaviate_client_v4.collections.get.return_value
+    mock_response = MagicMock()
+    mock_response.has_errors = True
+    mock_response.errors = {1: MagicMock(message="Invalid vector dimension")}
+    collection.data.insert_many.return_value = mock_response
+    
+    # Test the function with malformed data
+    with pytest.raises(WeaviateStorageError):
+        weaviate_client.batch_import_chunks(mock_weaviate_client_v4, chunks)
+    
+    # Verify error handling
+    collection.data.insert_many.assert_called_once()
+    assert mock_weaviate_client_v4.is_connected.called
+
+# Test metadata filtering
+@pytest.mark.skip(reason="Placeholder test for future functionality")
+def test_query_with_metadata_filter(mock_weaviate_client_v4):
+    """Tests querying with metadata filters."""
+    # Mock where filter builder
+    mock_query_builder = mock_weaviate_client_v4.collections.get.return_value.query
+    mock_where = MagicMock()
+    mock_query_builder.with_where.return_value = mock_where
+    
+    mock_with_limit = MagicMock()
+    mock_where.with_limit.return_value = mock_with_limit
+    
+    mock_query_response = MagicMock()
+    mock_query_response.objects = [
+        MagicMock(
+            properties={
+                "chunk_id": "test_chunk_3", 
+                "document_id": "test_doc_2", 
+                "text": "Filtered content",
+                "page_number": 5
+            }
+        )
+    ]
+    mock_with_limit.do.return_value = mock_query_response
+    
+    # This is a placeholder for the actual implementation
+    # We would call a function like:
+    """
+    filter_query = {
+        "path": ["page_number"],
+        "operator": "Equal",
+        "valueInt": 5
+    }
+    results = query_with_filter(mock_weaviate_client_v4, filter_query, limit=10)
+    
+    assert len(results) == 1
+    assert results[0]["chunk_id"] == "test_chunk_3"
+    assert results[0]["page_number"] == 5
+    """
+    
+    # Until we implement the function, verify the mock setup
+    collection = mock_weaviate_client_v4.collections.get.return_value
+    collection.query.with_where.assert_not_called() 
