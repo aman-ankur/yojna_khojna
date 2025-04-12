@@ -96,9 +96,14 @@
         *   Correcting Weaviate class name to `YojnaChunk` in `.env` and tests.
     *   Added integration tests (`backend/tests/integration/test_rag_integration.py`) confirming end-to-end flow.
     *   Added helper scripts `backend/src/rag/check_status.py` and `backend/src/rag/demo.py`.
-*   [ ] **2.4: Build Core RAG Chain:** (Renumbered/Refined)
+*   [x] **2.4: Implement Basic Chat API Endpoint** - Status: ✅ COMPLETE (YYYY-MM-DD)
+    *   Defined `ChatQuery` and `ChatResponse` Pydantic models in `schemas.py`.
+    *   Implemented a `/chat` POST endpoint in `main.py`.
+    *   Endpoint uses `get_rag_chain` to process the query.
+    *   Includes basic error handling for RAG chain execution.
+*   [ ] **2.5: Build Core RAG Chain:** (Renumbered/Refined)
     *   Construct the primary LangChain sequence: Retriever -> Prompt -> LLM -> Output Parser.
-*   [ ] **2.5: Create `/chat` API Endpoint:** (Renumbered/Refined)
+    *   [ ] **2.5: Create `/chat` API Endpoint:** (Renumbered/Refined)
     *   Define a new endpoint in `main.py` to accept user queries.
     *   Pass the query to the RAG chain.
     *   Return the LLM's response.

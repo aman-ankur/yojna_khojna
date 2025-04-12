@@ -224,4 +224,47 @@ def run_processing_pipeline(pdf_content: bytes, original_filename: str, file_has
         logger.info(f"Background task finished for {original_filename} (hash: {file_hash[:8]}...).")
 
 
+# === Chat Endpoint ===
+from .schemas import ChatQuery, ChatResponse # Import chat schemas
+from .rag.chain import get_rag_chain # Import the RAG chain function
+
+# Potentially initialize the chain once on startup for efficiency
+# Or initialize per request if state needs to be fresh
+# For now, initialize per request for simplicity
+# rag_chain_instance = get_rag_chain()
+
+@app.post("/chat", response_model=ChatResponse, tags=["Chat"])
+async def chat_endpoint(query: ChatQuery):
+    """
+    Receives a user query, processes it through the RAG chain,
+    and returns the generated answer.
+    """
+    logger.info(f"Received chat query: '{query.question}'")
+    try:
+        # Initialize RAG chain (consider moving to startup if stateless)
+        rag_chain = get_rag_chain()
+        
+        # Invoke the chain with the question
+        logger.debug("Invoking RAG chain...")
+        answer = rag_chain.invoke(query.question)
+        logger.info(f"RAG chain generated answer.")
+        
+        if not answer:
+            logger.warning("RAG chain returned an empty answer.")
+            # Return a default response or raise an error depending on desired behavior
+            # For now, return an explicit message
+            return ChatResponse(answer="Sorry, I couldn't generate an answer for that question.")
+
+        return ChatResponse(answer=answer)
+
+    except (WeaviateConnectionError, WeaviateSchemaError, EmbeddingModelError) as e:
+        # Handle specific known errors related to dependencies
+        logger.error(f"Dependency error during chat processing: {e}", exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Service dependency error: {e}")
+    except Exception as e:
+        # Catch-all for unexpected errors during RAG chain execution
+        logger.critical(f"Unexpected error processing chat query '{query.question}': {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error while processing the chat query.")
+
+
 # Add more endpoints later 
