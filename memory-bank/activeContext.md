@@ -1,28 +1,27 @@
 # Active Context
 
 ## Current Goal
-Starting Phase 2: Core Conversational API (RAG - English) with Task 2.1: Basic API Endpoint (FastAPI).
+Begin Phase 2, Task 2.2: Integrate LangChain for RAG.
 
 ## Focus Areas
-*   Setting up the FastAPI application structure.
-*   Creating the initial `/process-pdf` endpoint.
-*   Integrating the existing `main_pipeline.py` logic into the API.
+*   Adding LangChain dependencies.
+*   Creating a LangChain Retriever component using the Weaviate vector store.
+*   Structuring the RAG module/code.
 
 ## Recent Activity
-*   Completed Task 1.9a: Refine Logging Setup.
-    *   Created `logging_config.py` using `dictConfig` for centralized setup.
-    *   Called `setup_logging()` in `main_pipeline.py`.
-    *   Removed `basicConfig` calls from `pdf_extractor.py` and `document_chunker.py`.
-    *   Ensured consistent use of `logging.getLogger(__name__)`.
-*   Verified Task 1.8 (Config Management) was complete.
-*   Completed Task 1.10 (Testing).
+*   Completed Task 2.1a (Idempotency Check):
+    *   Implemented SHA256 hashing for `/process-pdf`.
+    *   Added Weaviate check for existing document hash.
+*   Completed Task 2.1b (Asynchronous Processing):
+    *   Refactored `/process-pdf` using FastAPI `BackgroundTasks`.
+    *   Endpoint now returns immediately, processing occurs in background.
+*   Added unit tests for the new functionality in `test_main.py`.
+*   **Evaluated Async Approaches:** Decided to stick with `BackgroundTasks` for now (simplicity) and defer migration to a dedicated Task Queue (Celery/Redis) for better scalability/resilience until later phases (e.g., Deployment Prep).
 
 ## Blockers
 *   None currently.
 
 ## Next Steps
-1.  **Implement Task 2.1: Basic API Endpoint (FastAPI):**
-    *   Add `fastapi` and `uvicorn` to `requirements.txt` (if not already present).
-    *   Create `backend/src/main.py` for the FastAPI app.
-    *   Define the `/process-pdf` endpoint (accepting file uploads).
-    *   Adapt `run_pipeline()` logic to be called by the endpoint.
+1.  **Add LangChain Dependencies:** Update `requirements.txt` with `langchain`, `langchain-community`, etc.
+2.  **Create RAG Module:** Set up a new directory/file (e.g., `backend/src/rag/retriever.py`).
+3.  **Implement Weaviate Retriever:** Write code to initialize `langchain_community.vectorstores.Weaviate` connected to our client and schema.

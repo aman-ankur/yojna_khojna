@@ -1,8 +1,8 @@
 # Project Progress
 
-## Current Phase: Phase 1 - Foundational Data Pipeline & Knowledge Base
+## Current Phase: Phase 2 - Core Conversational API (RAG - English)
 
-**Objective:** Build the core components to ingest PDF documents, extract text, chunk it, generate embeddings, and store them in a vector database.
+**Objective:** Create the backend API endpoint for RAG-based Q&A (English first), starting with document ingestion via API.
 
 **Completed Tasks:**
 
@@ -49,16 +49,48 @@
     *   Added integration tests for the full pipeline from document chunks to embeddings to vector storage.
     *   Created test scaffolding for future search functionality.
     *   Added proper pytest configuration with custom markers.
+*   [x] **2.1: Basic API Endpoint (FastAPI):**
+    *   Added `fastapi`, `uvicorn`, `python-multipart` to dependencies.
+    *   Created `backend/src/main.py` with FastAPI app instance.
+    *   Added `/health` check endpoint.
+    *   Implemented `/process-pdf` endpoint:
+        *   Accepts PDF file upload.
+        *   Saves file temporarily.
+        *   Calls `process_pdf` from `main_pipeline.py`.
+        *   Connects to Weaviate and stores resulting chunks/embeddings.
+        *   Handles pipeline and Weaviate errors with HTTP exceptions.
+        *   Includes temporary file cleanup and Weaviate client closure.
+    *   Added `__init__.py` files for package structure.
+    *   Enabled automatic Swagger (`/docs`) and ReDoc (`/redoc`) documentation.
+
+*   [x] **2.1a: Implement Idempotency Check:**
+    *   Added SHA256 hash calculation for uploaded PDF content.
+    *   Added Weaviate query to check for existing `document_hash`.
+    *   Updated schema and batch import to store `document_hash`.
+    *   Endpoint returns `{"status": "exists"}` if hash found.
+*   [x] **2.1b: Implement Asynchronous Processing:**
+    *   Refactored `/process-pdf` to use FastAPI `BackgroundTasks`.
+    *   Moved core processing logic to `run_processing_pipeline` function.
+    *   Endpoint returns `{"status": "processing_scheduled"}` (202 Accepted implicitly via BackgroundTasks) immediately for new files.
+*   [x] **2.1c: Log Deferred Improvements:** (Optional tracking task)
+    *   Note: Input Validation/Security and Config Robustness identified for future implementation.
 
 **Current / Next Task:**
 
-*   [ ] **2.1: Basic API Endpoint (FastAPI):** (Renumbered from previous 1.8)
-    *   Set up a basic FastAPI application.
-    *   Create an endpoint `/process-pdf` that takes a PDF file, runs the full pipeline (extract, chunk, embed, load), and returns status.
-*   [ ] **2.2: Initial Testing and Refinement:** (Renumbered from previous 1.9)
-    *   Test the end-to-end pipeline with various PDFs.
-    *   Refine chunking parameters, error handling, and logging.
+*   [ ] **2.2: Integrate LangChain for RAG:** (Renumbered/Refined from original plan)
+    *   Integrate `langchain` components for building a Retrieval-Augmented Generation chain.
+    *   Connect the chain to the Weaviate vector store as the retriever.
+
+*   [ ] **2.3: Integrate LLM API:** (Renumbered/Refined)
+    *   Choose and configure an LLM API client (e.g., OpenAI, Anthropic).
+    *   Integrate the LLM into the LangChain RAG setup.
+*   [ ] **2.4: Build Core RAG Chain:** (Renumbered/Refined)
+    *   Construct the primary LangChain sequence: Retriever -> Prompt -> LLM -> Output Parser.
+*   [ ] **2.5: Create `/chat` API Endpoint:** (Renumbered/Refined)
+    *   Define a new endpoint in `main.py` to accept user queries.
+    *   Pass the query to the RAG chain.
+    *   Return the LLM's response.
 
 ---
 
-*Note: This file tracks the high-level progress. Detailed decisions and technical context are in other `memory-bank` files.*
+*Note: This file tracks the high-level progress. Detailed decisions and technical context are in other `memory-bank` files. Task numbering refined based on implementation progress.*

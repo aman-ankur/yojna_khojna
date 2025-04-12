@@ -5,9 +5,11 @@ pytesseract
 Pillow
 weaviate-client
 langchain
-sentence-transformers 
+sentence-transformers
 python-dotenv
+python-multipart
 
 # Testing
 pytest
-pytest-mock 
+pytest-mock
+pytest-asyncio # For testing async FastAPI code 

@@ -81,7 +81,9 @@ def ensure_schema_exists(client: weaviate.WeaviateClient):
         # Define properties using wvc constants
         properties = [
             wvc.config.Property(name="chunk_id", data_type=wvc.config.DataType.TEXT, description="Unique identifier for the chunk"),
-            wvc.config.Property(name="document_id", data_type=wvc.config.DataType.TEXT, description="Identifier of the source document"),
+            wvc.config.Property(name="document_id", data_type=wvc.config.DataType.TEXT, description="Identifier of the source document (e.g., filename stem)"),
+            wvc.config.Property(name="document_hash", data_type=wvc.config.DataType.TEXT, description="SHA256 hash of the original document content",
+                              tokenization=wvc.config.Tokenization.FIELD), # Use keyword tokenization for exact match filtering
             wvc.config.Property(name="text", data_type=wvc.config.DataType.TEXT, description="The actual text content of the chunk"),
             wvc.config.Property(name="page_number", data_type=wvc.config.DataType.INT, description="Page number from the source PDF"),
         ]
@@ -109,12 +111,14 @@ def ensure_schema_exists(client: weaviate.WeaviateClient):
         logger.error(f"Unexpected error occurred while checking/creating collection '{CLASS_NAME}': {e}", exc_info=True)
         raise WeaviateSchemaError(f"Unexpected error ensuring Weaviate schema '{CLASS_NAME}': {e}") from e
 
-def batch_import_chunks(client: weaviate.WeaviateClient, chunks: List[DocumentChunk]):
-    """Imports a list of DocumentChunk objects into Weaviate using v4 batching.
+def batch_import_chunks(client: weaviate.WeaviateClient, chunks: List[DocumentChunk], document_hash: str):
+    """Imports a list of DocumentChunk objects into Weaviate using v4 batching,
+    associating them with the original document's hash.
 
     Args:
         client: An initialized WeaviateClient.
         chunks: A list of DocumentChunk objects (must have embeddings).
+        document_hash: The SHA256 hash of the original document.
 
     Raises:
         WeaviateConnectionError: If the client is not connected.
@@ -142,6 +146,7 @@ def batch_import_chunks(client: weaviate.WeaviateClient, chunks: List[DocumentCh
         properties = {
             "chunk_id": chunk.chunk_id,
             "document_id": chunk.document_id,
+            "document_hash": document_hash,
             "text": chunk.text,
             "page_number": chunk.metadata.get("page_number")
         }
