@@ -77,14 +77,25 @@
 
 **Current / Next Task:**
 
-*   [x] **2.2: Integrate LangChain for RAG:** (Renumbered/Refined from original plan)
-    *   Integrate `langchain` components for building a Retrieval-Augmented Generation chain.
-    *   Connect the chain to the Weaviate vector store as the retriever.
-    *   *Status: Completed - Added dependencies, RAG module structure, Weaviate connection (`vector_store.py`), and integrated retriever into basic chain (`chain.py`).*
-
-*   [ ] **2.3: Integrate LLM API:** (Renumbered/Refined)
-    *   Choose and configure an LLM API client (e.g., Anthropic - confirmed).
-    *   Integrate the LLM into the LangChain RAG setup.
+*   [x] **2.2: Integrate LangChain for RAG** - Status: ✅ COMPLETE (YYYY-MM-DD)
+    *   Created `backend/src/rag/chain.py` with basic LCEL structure.
+    *   Created `backend/src/rag/vector_store.py` to handle Weaviate connection.
+    *   Implemented `get_retriever` using `langchain-community` (later updated).
+    *   Integrated retriever into the basic chain.
+*   [x] **2.3: Integrate LLM API (Anthropic Claude)** - Status: ✅ COMPLETE (YYYY-MM-DD)
+    *   Added `langchain-anthropic` dependency.
+    *   Added `ANTHROPIC_API_KEY` to `.env` / `.env.example`.
+    *   Created `backend/src/rag/llm.py` with `get_chat_model` function using `ChatAnthropic` (Claude 3 Haiku by default).
+    *   Integrated `llm` into the `rag_chain` in `chain.py`.
+    *   Added unit tests for `llm.py` and `chain.py` (`backend/tests/rag/`).
+    *   Resolved Weaviate client v3/v4 compatibility issues by:
+        *   Using `weaviate.connect_to_local()` for client connection.
+        *   Adding `langchain-weaviate` dependency.
+        *   Switching from `langchain_community.vectorstores.Weaviate` to `langchain_weaviate.WeaviateVectorStore`.
+        *   Providing `SentenceTransformerEmbeddings` explicitly to `WeaviateVectorStore`.
+        *   Correcting Weaviate class name to `YojnaChunk` in `.env` and tests.
+    *   Added integration tests (`backend/tests/integration/test_rag_integration.py`) confirming end-to-end flow.
+    *   Added helper scripts `backend/src/rag/check_status.py` and `backend/src/rag/demo.py`.
 *   [ ] **2.4: Build Core RAG Chain:** (Renumbered/Refined)
     *   Construct the primary LangChain sequence: Retriever -> Prompt -> LLM -> Output Parser.
 *   [ ] **2.5: Create `/chat` API Endpoint:** (Renumbered/Refined)

@@ -6,23 +6,17 @@ from langchain_core.output_parsers import StrOutputParser
 
 # Import the retriever function from our vector store module
 from .vector_store import get_retriever
-
-# Placeholder for LLM (will be initialized later)
-# from .llm import get_chat_model
+# Import the LLM initialization function
+from .llm import get_chat_model
 
 def format_docs(docs):
     """Formats retrieved documents for the prompt."""
     return "\n\n".join(doc.page_content for doc in docs)
 
 def get_rag_chain():
-    """Builds and returns the RAG chain.
-
-    This function will be expanded in subsequent tasks to integrate
-    the actual vector store retriever and LLM.
-    """
+    """Builds and returns the RAG chain integrating the retriever and LLM."""
 
     # --- Prompt Template Definition ---
-    # Define the structure for prompting the LLM, incorporating context and question.
     template = """
     Answer the question based only on the following context:
     {context}
@@ -31,42 +25,29 @@ def get_rag_chain():
     """
     prompt = ChatPromptTemplate.from_template(template)
 
-    # --- Placeholders for actual components ---
-    # These will be replaced with actual retriever and LLM instances
-    retriever = get_retriever() # Task 2.3 - Done!
-    # llm = get_chat_model()      # Task 2.4
+    # --- Initialize Components ---
+    retriever = get_retriever()
+    llm = get_chat_model()      # Initialize the LLM
 
-    # --- Basic Chain Structure (using placeholders for now) ---
-    # This demonstrates the flow: context retrieval -> prompt formatting -> LLM -> output parsing.
-    # We use RunnablePassthrough for components not yet implemented.
-    # rag_chain = (
-    #     {"context": RunnablePassthrough(), "question": RunnablePassthrough()} # Placeholder for retriever
-    #     | prompt
-    #     # | llm # Placeholder for LLM
-    #     | StrOutputParser()
-    # )
-
-    # Updated chain using the actual retriever
+    # --- RAG Chain Definition ---
+    # Flow: Retrieve context -> Format documents -> Format prompt -> Call LLM -> Parse output
     rag_chain = (
         {"context": retriever | format_docs, "question": RunnablePassthrough()}
         | prompt
-        # | llm # Still needs Task 2.4
-        | StrOutputParser() # Output parser remains
+        | llm # Integrate the LLM
+        | StrOutputParser() # Parse the LLM output to a string
     )
 
-    print("RAG chain created with Weaviate retriever. LLM integration pending task 2.4.")
-    # For now, return a simple placeholder that doesn't do much
-    # This allows the API endpoint (Task 2.6) to be created without errors.
-    return lambda input_dict: f"Processing question: {input_dict.get('question', '')} (RAG chain not fully implemented)"
+    print("RAG chain created with Weaviate retriever and Anthropic LLM.")
+    return rag_chain # Return the actual chain
 
-# Example of how it might be called (will be done in the API endpoint)
+# Example usage (primarily for testing, main usage will be via API)
 # if __name__ == '__main__':
 #     chain = get_rag_chain()
-#     # This requires actual retriever and LLM to work
-#     # result = chain.invoke("What is the eligibility for scheme X?")
-#     # print(result)
-
-    # Example with the placeholder chain:
-    placeholder_chain = get_rag_chain()
-    result = placeholder_chain({"question": "Test question"})
-    print(result) 
+#     try:
+#         result = chain.invoke("What are some key features of Claude 3?") # Example question
+#         print("\n--- RAG Chain Output ---")
+#         print(result)
+#         print("------------------------\n")
+#     except Exception as e:
+#         print(f"Error invoking RAG chain: {e}") 
