@@ -75,23 +75,44 @@
 *   [x] **2.1c: Log Deferred Improvements:** (Optional tracking task)
     *   Note: Input Validation/Security and Config Robustness identified for future implementation.
 
-**Current / Next Task:**
+*   [x] **2.2: Integrate LangChain for RAG** - Status: ✅ COMPLETE
+    *   Created `backend/src/rag/chain.py` with basic LCEL structure.
+    *   Created `backend/src/rag/vector_store.py` to handle Weaviate connection.
+    *   Implemented `get_retriever` using `langchain-weaviate`.
+    *   Integrated retriever into the basic chain.
+*   [x] **2.3: Integrate LLM API (Anthropic Claude)** - Status: ✅ COMPLETE
+    *   Added `langchain-anthropic` dependency.
+    *   Added `ANTHROPIC_API_KEY` to `.env` / `.env.example`.
+    *   Created `backend/src/rag/llm.py` with `get_chat_model` function using `ChatAnthropic` (Claude 3 Haiku by default).
+    *   Integrated `llm` into the `rag_chain` in `chain.py`.
+    *   Added unit tests for `llm.py` and `chain.py` (`backend/tests/rag/`).
+    *   Resolved Weaviate client v3/v4 compatibility issues.
+    *   Added integration tests (`backend/tests/integration/test_rag_integration.py`) confirming end-to-end flow.
+    *   Added helper scripts `backend/src/rag/check_status.py` and `backend/src/rag/demo.py`.
+*   [x] **2.4: Implement Basic Chat API Endpoint** - Status: ✅ COMPLETE
+    *   Defined `ChatQuery` and `ChatResponse` Pydantic models in `schemas.py`.
+    *   Implemented a `/chat` POST endpoint in `main.py`.
+    *   Endpoint uses RAG chain to process the query.
+    *   Added integration tests for the `/chat` endpoint (`test_main_chat.py`).
+*   [x] **2.5: Build Core RAG Chain:** - Status: ✅ COMPLETE (Refined & integrated within other tasks)
+    *   Constructed the primary LangChain sequence: Retriever -> Prompt -> LLM -> Output Parser.
+    *   Integrated within `chain.py` and tested via `/chat` endpoint.
+*   [x] **2.6: Implement Conversation History Management:** Status: ✅ COMPLETE
+    *   Refactored `rag/chain.py` using `create_history_aware_retriever` and `create_stuff_documents_chain`.
+    *   Updated `/chat` endpoint and schemas (`ChatQuery`, `ChatResponse`) to handle history.
+    *   Optimized cost by removing full history from the final QA prompt.
+    *   Updated unit and integration tests.
+    *   Documented approach in `techContext.md`.
 
-*   [x] **2.2: Integrate LangChain for RAG:** (Renumbered/Refined from original plan)
-    *   Integrate `langchain` components for building a Retrieval-Augmented Generation chain.
-    *   Connect the chain to the Weaviate vector store as the retriever.
-    *   *Status: Completed - Added dependencies, RAG module structure, Weaviate connection (`vector_store.py`), and integrated retriever into basic chain (`chain.py`).*
-
-*   [ ] **2.3: Integrate LLM API:** (Renumbered/Refined)
-    *   Choose and configure an LLM API client (e.g., Anthropic - confirmed).
-    *   Integrate the LLM into the LangChain RAG setup.
-*   [ ] **2.4: Build Core RAG Chain:** (Renumbered/Refined)
-    *   Construct the primary LangChain sequence: Retriever -> Prompt -> LLM -> Output Parser.
-*   [ ] **2.5: Create `/chat` API Endpoint:** (Renumbered/Refined)
-    *   Define a new endpoint in `main.py` to accept user queries.
-    *   Pass the query to the RAG chain.
-    *   Return the LLM's response.
+**Phase 2 Overall Status:** ✅ COMPLETE
 
 ---
+
+## Next Phase: Phase 3 - Basic Frontend Interface
+
+**Objective:** Develop a simple web UI for interaction.
+
+**Next Task:**
+*   [ ] **3.1: Set up React project (TypeScript).**
 
 *Note: This file tracks the high-level progress. Detailed decisions and technical context are in other `memory-bank` files. Task numbering refined based on implementation progress.*

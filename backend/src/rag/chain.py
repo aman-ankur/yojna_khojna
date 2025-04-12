@@ -1,72 +1,121 @@
 """Core RAG chain setup and execution logic."""
 
-from langchain_core.runnables import RunnablePassthrough
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.messages import AIMessage, HumanMessage
 
 # Import the retriever function from our vector store module
 from .vector_store import get_retriever
+# Import the LLM initialization function
+from .llm import get_chat_model
 
-# Placeholder for LLM (will be initialized later)
-# from .llm import get_chat_model
+# LangChain Community/Integrations (if needed, e.g., specific retrievers/LLMs)
+# (Keep existing imports if they are from here)
 
-def format_docs(docs):
-    """Formats retrieved documents for the prompt."""
-    return "\n\n".join(doc.page_content for doc in docs)
+# LangChain Chains for orchestration
+from langchain.chains import create_history_aware_retriever
+from langchain.chains.combine_documents import create_stuff_documents_chain
 
-def get_rag_chain():
-    """Builds and returns the RAG chain.
-
-    This function will be expanded in subsequent tasks to integrate
-    the actual vector store retriever and LLM.
+def create_conversational_rag_chain():
     """
+    Builds and returns a conversational RAG chain that considers chat history.
 
-    # --- Prompt Template Definition ---
-    # Define the structure for prompting the LLM, incorporating context and question.
-    template = """
-    Answer the question based only on the following context:
-    {context}
-
-    Question: {question}
+    The chain consists of two main parts:
+    1. History-Aware Retriever: Takes history and current input, rephrases the
+       input into a standalone question, and retrieves relevant documents.
+    2. Question-Answering Chain: Takes the rephrased question and retrieved
+       documents to generate the final answer.
     """
-    prompt = ChatPromptTemplate.from_template(template)
+    llm = get_chat_model()
+    retriever = get_retriever()
 
-    # --- Placeholders for actual components ---
-    # These will be replaced with actual retriever and LLM instances
-    retriever = get_retriever() # Task 2.3 - Done!
-    # llm = get_chat_model()      # Task 2.4
+    # --- Contextualization Prompt (for rephrasing question based on history) ---
+    # This prompt helps the LLM understand the flow of conversation.
+    CONTEXTUALIZE_Q_SYSTEM_PROMPT = """Given a chat history and the latest user question \\
+    which might reference context in the chat history, formulate a standalone question \\
+    which can be understood without the chat history. Do NOT answer the question, \\
+    just reformulate it if needed and otherwise return it as is."""
 
-    # --- Basic Chain Structure (using placeholders for now) ---
-    # This demonstrates the flow: context retrieval -> prompt formatting -> LLM -> output parsing.
-    # We use RunnablePassthrough for components not yet implemented.
-    # rag_chain = (
-    #     {"context": RunnablePassthrough(), "question": RunnablePassthrough()} # Placeholder for retriever
-    #     | prompt
-    #     # | llm # Placeholder for LLM
-    #     | StrOutputParser()
-    # )
-
-    # Updated chain using the actual retriever
-    rag_chain = (
-        {"context": retriever | format_docs, "question": RunnablePassthrough()}
-        | prompt
-        # | llm # Still needs Task 2.4
-        | StrOutputParser() # Output parser remains
+    contextualize_q_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", CONTEXTUALIZE_Q_SYSTEM_PROMPT),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "{input}"),
+        ]
     )
 
-    print("RAG chain created with Weaviate retriever. LLM integration pending task 2.4.")
-    # For now, return a simple placeholder that doesn't do much
-    # This allows the API endpoint (Task 2.6) to be created without errors.
-    return lambda input_dict: f"Processing question: {input_dict.get('question', '')} (RAG chain not fully implemented)"
+    # --- History-Aware Retriever Chain ---
+    # This chain uses the LLM to rephrase the question, then retrieves documents.
+    history_aware_retriever = create_history_aware_retriever(
+        llm, retriever, contextualize_q_prompt
+    )
 
-# Example of how it might be called (will be done in the API endpoint)
+    # --- Answering Prompt (using retrieved context) ---
+    # This prompt guides the LLM to answer based *only* on the provided context.
+    QA_SYSTEM_PROMPT = """You are an assistant for question-answering tasks for the Yojna Khojna project. \\
+    Use the following pieces of retrieved context to answer the question. \\
+    If you don't know the answer, just say that you don't know. \\
+    Use three sentences maximum and keep the answer concise.
+
+    Context:
+    {context}
+    """
+    qa_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", QA_SYSTEM_PROMPT),
+            ("human", "{input}"),
+        ]
+    )
+
+    # --- Document Combination Chain (Stuff Chain) ---
+    # This chain takes the potentially rephrased question and documents,
+    # formats them into the QA_PROMPT, and sends to the LLM.
+    question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+
+    # --- Full Conversational RAG Chain ---
+    # Uses RunnableParallel to prepare the input for the question_answer_chain.
+    # It runs the history_aware_retriever to get the documents ('context')
+    # and passes the original 'input' through.
+    rag_chain = RunnableParallel(
+        {"context": history_aware_retriever, "input": RunnablePassthrough()}
+    ) | question_answer_chain
+
+    print("Conversational RAG chain created with history awareness.")
+    # Note: The final output parser is now implicitly handled by create_stuff_documents_chain
+    # which returns the message content (string) by default with ChatModels.
+    # If you needed the AIMessage object, you wouldn't pipe to StrOutputParser.
+
+    return rag_chain
+
+# Kept original get_rag_chain for potential compatibility, but marked as deprecated
+# or potentially to be removed later. The main usage should shift to
+# create_conversational_rag_chain.
+# def get_rag_chain():
+#     \"\"\"Builds and returns the original (non-conversational) RAG chain.\"\"\"
+#     # --- Prompt Template Definition ---\n    template = \"\"\"
+#     Answer the question based only on the following context:\n    {context}\n\n    Question: {question}\n    \"\"\"\n    prompt = ChatPromptTemplate.from_template(template)\n\n    # --- Initialize Components ---\n    retriever = get_retriever()\n    llm = get_chat_model()      # Initialize the LLM\n\n    # --- RAG Chain Definition ---\n    rag_chain = (\n        {\"context\": retriever | format_docs, \"question\": RunnablePassthrough()}\n        | prompt\n        | llm\n        | StrOutputParser()\n    )\n    print(\"Original (non-conversational) RAG chain created.\")\n    return rag_chain
+
+# Example usage (updated for conversational chain)
 # if __name__ == '__main__':
-#     chain = get_rag_chain()
-#     # This requires actual retriever and LLM to work
-#     # result = chain.invoke("What is the eligibility for scheme X?")
-#     # print(result)
+#     chain = create_conversational_rag_chain()
+#     chat_history = [] # Maintain history outside the function
+#     try:
+#         print("\\n--- Invoking Conversational RAG Chain ---")
+#         query1 = "What is Abua Awaas Yojana?"
+#         print(f"User: {query1}")
+#         result1 = chain.invoke({"input": query1, "chat_history": chat_history})
+#         print(f"AI: {result1}")
+#         chat_history.extend([HumanMessage(content=query1), AIMessage(content=result1)])
 
-    # Example with the placeholder chain:
-    placeholder_chain = get_rag_chain()
-    result = placeholder_chain({"question": "Test question"})
-    print(result) 
+#         print("\\n--- Follow-up Question ---")
+#         query2 = "Who is eligible for it?"
+#         print(f"User: {query2}")
+#         result2 = chain.invoke({"input": query2, "chat_history": chat_history})
+#         print(f"AI: {result2}")
+#         chat_history.extend([HumanMessage(content=query2), AIMessage(content=result2)])
+
+#         print("\\n------------------------------------\\n")
+
+#     except Exception as e:
+#         print(f"Error invoking conversational RAG chain: {e}") 

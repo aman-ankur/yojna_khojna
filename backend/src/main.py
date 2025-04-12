@@ -224,4 +224,75 @@ def run_processing_pipeline(pdf_content: bytes, original_filename: str, file_has
         logger.info(f"Background task finished for {original_filename} (hash: {file_hash[:8]}...).")
 
 
+# === Chat Endpoint ===
+from .schemas import ChatQuery, ChatResponse # Import chat schemas
+# Import the NEW conversational RAG chain function
+from .rag.chain import create_conversational_rag_chain
+# Import LangChain message types for history formatting
+from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
+from typing import List, Tuple
+
+# Potentially initialize the chain once on startup for efficiency
+# If the chain itself is stateless (which LangChain chains usually are),
+# this avoids re-initialization overhead on every request.
+# Ensure components like LLM clients within the chain are thread-safe if doing this.
+# For now, keeping initialization per-request for safety, can optimize later.
+# conversational_rag_chain = create_conversational_rag_chain()
+
+@app.post("/chat", response_model=ChatResponse, tags=["Chat"])
+async def chat_endpoint(query: ChatQuery):
+    """
+    Receives a user query and conversation history.
+    Processes it through the conversational RAG chain.
+    Returns the generated answer and the updated history.
+    """
+    logger.info(f"Received chat query: '{query.question}', History length: {len(query.chat_history)}")
+
+    # Format the incoming history (list of tuples) into LangChain BaseMessage objects
+    # Expects [(human_msg_1, ai_msg_1), (human_msg_2, ai_msg_2), ...]
+    formatted_history: List[BaseMessage] = []
+    for human_msg, ai_msg in query.chat_history:
+        formatted_history.append(HumanMessage(content=human_msg))
+        formatted_history.append(AIMessage(content=ai_msg))
+
+    logger.debug(f"Formatted history: {formatted_history}")
+
+    try:
+        # Initialize the CONVERSATIONAL RAG chain
+        # rag_chain = conversational_rag_chain # Use pre-initialized if done at startup
+        rag_chain = create_conversational_rag_chain()
+
+        # Invoke the chain with the question AND the formatted history
+        logger.debug("Invoking conversational RAG chain...")
+        # The chain expects a dictionary with 'input' and 'chat_history' keys
+        response = rag_chain.invoke({
+            "input": query.question,
+            "chat_history": formatted_history
+        })
+
+        # The response from create_stuff_documents_chain is typically the string answer
+        answer = response
+        logger.info(f"Conversational RAG chain generated answer.")
+
+        if not answer:
+            logger.warning("Conversational RAG chain returned an empty answer.")
+            # Maintain the original history if no answer is generated
+            return ChatResponse(answer="Sorry, I couldn't generate an answer for that question.", updated_history=query.chat_history)
+
+        # Update the history with the new exchange for the response
+        updated_history = query.chat_history + [(query.question, answer)]
+
+        return ChatResponse(answer=answer, updated_history=updated_history)
+
+    # Keep existing specific error handling
+    except (WeaviateConnectionError, WeaviateSchemaError, EmbeddingModelError) as e:
+        # Handle specific known errors related to dependencies
+        logger.error(f"Dependency error during chat processing: {e}", exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Service dependency error: {e}")
+    except Exception as e:
+        # Catch-all for unexpected errors during RAG chain execution
+        logger.critical(f"Unexpected error processing chat query '{query.question}': {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error while processing the chat query.")
+
+
 # Add more endpoints later 

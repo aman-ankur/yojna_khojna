@@ -2,8 +2,11 @@
 
 import os
 import weaviate
-from langchain_community.vectorstores import Weaviate
+# Replace deprecated import with the new one
+# from langchain_community.vectorstores import Weaviate
+from langchain_weaviate import WeaviateVectorStore
 from langchain_core.vectorstores import VectorStoreRetriever
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -14,49 +17,67 @@ WEAVIATE_URL = os.getenv("WEAVIATE_URL", "http://localhost:8080")
 # TODO: Confirm these with the actual Weaviate schema created in Phase 1
 WEAVIATE_CLASS_NAME = os.getenv("WEAVIATE_CLASS_NAME", "SchemeDocumentChunk")
 WEAVIATE_TEXT_KEY = os.getenv("WEAVIATE_TEXT_KEY", "text")
+EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "paraphrase-multilingual-mpnet-base-v2")
 
 # --- Weaviate Client --- #
 _weaviate_client = None
 
-def get_weaviate_client() -> weaviate.Client:
+def get_weaviate_client():
     """Initializes and returns a singleton Weaviate client instance."""
     global _weaviate_client
     if _weaviate_client is None:
-        print(f"Attempting to connect to Weaviate at {WEAVIATE_URL}...")
+        print(f"Attempting to connect to Weaviate (expecting local instance)...")
         try:
-            # TODO: Add authentication if Weaviate instance requires it
-            # auth_config = weaviate.auth.AuthApiKey(api_key=os.getenv("WEAVIATE_API_KEY"))
-            client = weaviate.Client(
-                url=WEAVIATE_URL,
-                # auth_client_secret=auth_config # Uncomment if using API key
-            )
-            if not client.is_ready():
-                raise ConnectionError("Weaviate client is not ready.")
-            _weaviate_client = client
-            print("Successfully connected to Weaviate.")
+            # Assume v4 and try connect_to_local
+            # For production/remote, use weaviate.connect_to_wcs() or weaviate.connect_to_custom()
+            _weaviate_client = weaviate.connect_to_local()
+            
+            if not _weaviate_client.is_ready():
+                raise ConnectionError("Weaviate client (connect_to_local) is not ready.")
+            
+            print("Successfully connected to Weaviate (using connect_to_local).")
+        except ImportError:
+             print("❌ Failed to import weaviate. Ensure 'weaviate-client' is installed.")
+             raise
         except Exception as e:
-            print(f"Error connecting to Weaviate: {e}")
-            # Depending on the application, might want to raise or handle differently
+            print(f"❌ Error connecting to Weaviate using connect_to_local: {e}")
+            # Consider adding fallback to other connection methods if needed
             raise
     return _weaviate_client
+
+# --- Embedding Model --- #
+_embedding_model = None
+
+def get_embedding_model():
+    """Initializes and returns a singleton embedding model instance."""
+    global _embedding_model
+    if _embedding_model is None:
+        print(f"Initializing embedding model: {EMBEDDING_MODEL_NAME}")
+        # Use SentenceTransformerEmbeddings
+        # Make sure the model name matches what was used for indexing!
+        _embedding_model = SentenceTransformerEmbeddings(
+            model_name=EMBEDDING_MODEL_NAME
+        )
+        print("Embedding model initialized.")
+    return _embedding_model
 
 # --- LangChain Vector Store and Retriever --- #
 _vector_store = None
 
-def get_vector_store() -> Weaviate:
+def get_vector_store() -> WeaviateVectorStore:
     """Initializes and returns a singleton LangChain Weaviate vector store instance."""
     global _vector_store
     if _vector_store is None:
         client = get_weaviate_client()
+        embeddings = get_embedding_model()
         print(f"Initializing LangChain Weaviate wrapper for class '{WEAVIATE_CLASS_NAME}' and text key '{WEAVIATE_TEXT_KEY}'")
-        # Ensure the text key matches the property name in your Weaviate schema
-        # that contains the text content you want to search over.
-        _vector_store = Weaviate(
+        
+        # Pass the embedding model to the constructor
+        _vector_store = WeaviateVectorStore(
             client=client,
             index_name=WEAVIATE_CLASS_NAME,
             text_key=WEAVIATE_TEXT_KEY,
-            # TODO: Specify attributes to retrieve if needed for metadata
-            # attributes=['source_pdf', 'chunk_id']
+            embedding=embeddings
         )
         print("LangChain Weaviate vector store initialized.")
     return _vector_store
