@@ -1,6 +1,6 @@
 """Core RAG chain setup and execution logic."""
 
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough, RunnableParallel
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import AIMessage, HumanMessage
@@ -74,10 +74,12 @@ def create_conversational_rag_chain():
     question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 
     # --- Full Conversational RAG Chain ---
-    # Pipelines the history-aware retriever and the question-answering chain.
-    # Input: {"input": "...", "chat_history": [...]}
-    # Output: String answer
-    rag_chain = history_aware_retriever | question_answer_chain
+    # Uses RunnableParallel to prepare the input for the question_answer_chain.
+    # It runs the history_aware_retriever to get the documents ('context')
+    # and passes the original 'input' through.
+    rag_chain = RunnableParallel(
+        {"context": history_aware_retriever, "input": RunnablePassthrough()}
+    ) | question_answer_chain
 
     print("Conversational RAG chain created with history awareness.")
     # Note: The final output parser is now implicitly handled by create_stuff_documents_chain
