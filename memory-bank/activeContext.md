@@ -1,27 +1,27 @@
 # Active Context
 
 ## Current Goal
-Begin Phase 2, Task 2.2: Integrate LangChain for RAG.
+Prepare to start Phase 3: Basic Frontend Interface.
 
 ## Focus Areas
-*   Adding LangChain dependencies.
-*   Creating a LangChain Retriever component using the Weaviate vector store.
-*   Structuring the RAG module/code.
+*   Finalizing knowledge base updates for Phase 2 completion.
+*   Planning the merge strategy for `feature/rag-llm-integration`.
+*   Starting frontend setup (React/TypeScript).
 
 ## Recent Activity
-*   Completed Task 2.1a (Idempotency Check):
-    *   Implemented SHA256 hashing for `/process-pdf`.
-    *   Added Weaviate check for existing document hash.
-*   Completed Task 2.1b (Asynchronous Processing):
-    *   Refactored `/process-pdf` using FastAPI `BackgroundTasks`.
-    *   Endpoint now returns immediately, processing occurs in background.
-*   Added unit tests for the new functionality in `test_main.py`.
-*   **Evaluated Async Approaches:** Decided to stick with `BackgroundTasks` for now (simplicity) and defer migration to a dedicated Task Queue (Celery/Redis) for better scalability/resilience until later phases (e.g., Deployment Prep).
+*   Completed Task 2.6: Implemented Conversation History Management.
+    *   Used `create_history_aware_retriever`.
+    *   Optimized cost by removing history from final QA prompt.
+    *   Updated API endpoint, schemas, tests.
+    *   Documented approach in `techContext.md`.
+*   Merged `feature/conversation-history` into `feature/rag-llm-integration`.
+*   Verified changes with passing tests.
+*   Pushed `feature/rag-llm-integration` to remote.
 
 ## Blockers
 *   None currently.
 
 ## Next Steps
-1.  **Add LangChain Dependencies:** Update `requirements.txt` with `langchain`, `langchain-community`, etc.
-2.  **Create RAG Module:** Set up a new directory/file (e.g., `backend/src/rag/retriever.py`).
-3.  **Implement Weaviate Retriever:** Write code to initialize `langchain_community.vectorstores.Weaviate` connected to our client and schema.
+1.  **Update Knowledge Base:** Complete updates to `progress.md` and `activeContext.md` (Done in this step).
+2.  **Discuss Merge:** Decide on merging `feature/rag-llm-integration` to `main` (or equivalent).
+3.  **Start Phase 3:** Begin Task 3.1 (React/TypeScript project setup).
