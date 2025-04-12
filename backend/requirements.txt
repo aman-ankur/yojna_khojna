@@ -5,8 +5,9 @@ pytesseract
 Pillow
 weaviate-client
 langchain
-sentence-transformers 
+sentence-transformers
 python-dotenv
+python-multipart
 
 # Testing
 pytest
