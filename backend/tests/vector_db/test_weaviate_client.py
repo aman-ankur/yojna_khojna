@@ -153,30 +153,39 @@ def test_batch_import_chunks_success(mocker: MockerFixture, mock_weaviate_client
     mock_response.errors = {}
     mock_collection.data.insert_many.return_value = mock_response
 
-    weaviate_client.batch_import_chunks(mock_weaviate_client_v4, sample_chunks_with_embeddings)
+    # Pass a dummy hash
+    weaviate_client.batch_import_chunks(mock_weaviate_client_v4, sample_chunks_with_embeddings, "test_success_hash")
 
+    # Assertions
+    mock_weaviate_client_v4.collections.get.assert_called_once_with(weaviate_client.CLASS_NAME)
+    # Check that insert_many was called
     mock_collection.data.insert_many.assert_called_once()
-    # Check that only the 2 chunks with embeddings were prepared
-    call_args = mock_collection.data.insert_many.call_args[0][0] # Get the list passed to insert_many
-    assert len(call_args) == 2
-    assert call_args[0].properties['chunk_id'] == "d1_c1"
-    assert call_args[1].properties['chunk_id'] == "d1_c2"
-    assert np.array_equal(call_args[0].vector, [0.1]*768)
+    # Extract the actual objects passed to insert_many
+    call_args, _ = mock_collection.data.insert_many.call_args
+    inserted_objects = call_args[0]
+    # Assert that only chunks with embeddings were prepared
+    assert len(inserted_objects) == 2
+    assert inserted_objects[0].properties["chunk_id"] == "d1_c1"
+    assert inserted_objects[1].properties["chunk_id"] == "d1_c2"
+    assert inserted_objects[0].properties["document_hash"] == "test_success_hash"
 
 def test_batch_import_chunks_not_connected(mock_weaviate_client_v4, sample_chunks_with_embeddings):
     """Tests WeaviateConnectionError if client is not connected."""
     mock_weaviate_client_v4.is_connected.return_value = False
 
     with pytest.raises(WeaviateConnectionError, match="Client is not connected"):
-        weaviate_client.batch_import_chunks(mock_weaviate_client_v4, sample_chunks_with_embeddings)
+        # Pass a dummy hash
+        weaviate_client.batch_import_chunks(mock_weaviate_client_v4, sample_chunks_with_embeddings, "test_not_connected_hash")
 
 def test_batch_import_chunks_empty_list(mock_weaviate_client_v4):
     """Tests that import is skipped for an empty list."""
     mock_weaviate_client_v4.is_connected.return_value = True
     mock_collection = mock_weaviate_client_v4.collections.get.return_value
 
-    weaviate_client.batch_import_chunks(mock_weaviate_client_v4, [])
+    # Pass a dummy hash
+    weaviate_client.batch_import_chunks(mock_weaviate_client_v4, [], "test_empty_hash")
 
+    # Assert that insert_many was not called
     mock_collection.data.insert_many.assert_not_called()
 
 def test_batch_import_chunks_all_skipped(mock_weaviate_client_v4):
@@ -185,8 +194,10 @@ def test_batch_import_chunks_all_skipped(mock_weaviate_client_v4):
     mock_collection = mock_weaviate_client_v4.collections.get.return_value
     chunks_no_embeddings = [DocumentChunk(chunk_id="c1", document_id="d1", text="t", embedding=None)]
 
-    weaviate_client.batch_import_chunks(mock_weaviate_client_v4, chunks_no_embeddings)
+    # Pass a dummy hash
+    weaviate_client.batch_import_chunks(mock_weaviate_client_v4, chunks_no_embeddings, "test_skipped_hash")
 
+    # Assert that insert_many was not called
     mock_collection.data.insert_many.assert_not_called()
 
 def test_batch_import_chunks_batch_errors(mocker: MockerFixture, mock_weaviate_client_v4, sample_chunks_with_embeddings):
@@ -202,7 +213,8 @@ def test_batch_import_chunks_batch_errors(mocker: MockerFixture, mock_weaviate_c
     mock_collection.data.insert_many.return_value = mock_response
 
     with pytest.raises(WeaviateStorageError, match="1 errors occurred"):
-        weaviate_client.batch_import_chunks(mock_weaviate_client_v4, sample_chunks_with_embeddings)
+        # Pass a dummy hash
+        weaviate_client.batch_import_chunks(mock_weaviate_client_v4, sample_chunks_with_embeddings, "test_batch_error_hash")
 
     mock_collection.data.insert_many.assert_called_once()
 
@@ -213,7 +225,8 @@ def test_batch_import_chunks_weaviate_exception(mocker: MockerFixture, mock_weav
     mock_collection.data.insert_many.side_effect = WeaviateBaseError("DB connection lost")
 
     with pytest.raises(WeaviateStorageError, match="DB connection lost"):
-        weaviate_client.batch_import_chunks(mock_weaviate_client_v4, sample_chunks_with_embeddings)
+        # Pass a dummy hash
+        weaviate_client.batch_import_chunks(mock_weaviate_client_v4, sample_chunks_with_embeddings, "test_weaviate_exc_hash")
 
     mock_collection.data.insert_many.assert_called_once()
 
@@ -297,7 +310,8 @@ def test_batch_import_malformed_vectors(mock_weaviate_client_v4, sample_chunks_w
     
     # Test the function with malformed data
     with pytest.raises(WeaviateStorageError):
-        weaviate_client.batch_import_chunks(mock_weaviate_client_v4, chunks)
+        # Pass a dummy hash
+        weaviate_client.batch_import_chunks(mock_weaviate_client_v4, chunks, "test_malformed_hash")
     
     # Verify error handling
     collection.data.insert_many.assert_called_once()

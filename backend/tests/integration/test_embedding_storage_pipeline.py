@@ -75,7 +75,7 @@ def test_embedding_and_storage_pipeline(sample_document_chunks):
             weaviate_client.ensure_schema_exists(mock_client)
             
             # Step 3: Store chunks in vector database
-            weaviate_client.batch_import_chunks(mock_client, chunks_with_embeddings)
+            weaviate_client.batch_import_chunks(mock_client, chunks_with_embeddings, "test_hash_pipeline")
             
             # Verify the entire pipeline completed as expected
             mock_model.encode.assert_called_once()
@@ -135,7 +135,8 @@ def test_pipeline_with_storage_error(sample_document_chunks):
             
             # Attempt to store the chunks
             with pytest.raises(WeaviateStorageError):
-                weaviate_client.batch_import_chunks(mock_client, chunks_with_embeddings)
+                # Pass a dummy hash for testing purposes
+                weaviate_client.batch_import_chunks(mock_client, chunks_with_embeddings, "test_hash_error")
                 
             # Verify error handling
             mock_collection.data.insert_many.assert_called_once() 
