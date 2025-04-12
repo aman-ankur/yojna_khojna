@@ -27,8 +27,14 @@ This document outlines the specific technologies and tools proposed for the Proo
 
 ## Frontend
 
-*   **Framework:** React.js
-*   **UI Library:** Chakra UI or Material UI
+*   **Framework:** React.js (v19)
+*   **Language:** TypeScript
+*   **Build Tool:** Vite
+*   **UI Library:** Material UI (MUI) - *(Chosen over Chakra UI due to integration issues during development)*
+*   **State Management:** React Context API (for simple cases), potentially Zustand or Redux Toolkit if complexity grows.
+*   **API Client:** Axios
+*   **Styling:** Emotion (via MUI), CSS Modules (if needed)
+*   **Testing:** Vitest, React Testing Library
 *   **Type:** Progressive Web App (PWA)
 
 ## Deployment & Infrastructure (POC)
