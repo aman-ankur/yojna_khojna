@@ -1,28 +1,32 @@
 # Active Context
 
 ## Current Goal
-Starting Phase 2: Core Conversational API (RAG - English) with Task 2.1: Basic API Endpoint (FastAPI).
+Implement stability improvements (Idempotency, Async) for the `/process-pdf` endpoint before proceeding with Phase 2 RAG tasks.
 
 ## Focus Areas
-*   Setting up the FastAPI application structure.
-*   Creating the initial `/process-pdf` endpoint.
-*   Integrating the existing `main_pipeline.py` logic into the API.
+*   Implementing idempotency check using file content hashing (SHA256).
+*   Refactoring `/process-pdf` to use FastAPI `BackgroundTasks`.
+*   Logging deferred improvements (Input Validation, Config Checks).
 
 ## Recent Activity
-*   Completed Task 1.9a: Refine Logging Setup.
-    *   Created `logging_config.py` using `dictConfig` for centralized setup.
-    *   Called `setup_logging()` in `main_pipeline.py`.
-    *   Removed `basicConfig` calls from `pdf_extractor.py` and `document_chunker.py`.
-    *   Ensured consistent use of `logging.getLogger(__name__)`.
-*   Verified Task 1.8 (Config Management) was complete.
-*   Completed Task 1.10 (Testing).
+*   Completed Task 2.1: Basic API Endpoint (FastAPI).
+    *   Created `backend/src/main.py` with FastAPI app.
+    *   Implemented synchronous `/process-pdf` endpoint.
+    *   Confirmed Swagger/ReDoc UI.
+*   Reviewed stability/resilience based on project context (bulk uploads, testing needs).
+*   Prioritized Idempotency and Async processing.
 
 ## Blockers
 *   None currently.
 
 ## Next Steps
-1.  **Implement Task 2.1: Basic API Endpoint (FastAPI):**
-    *   Add `fastapi` and `uvicorn` to `requirements.txt` (if not already present).
-    *   Create `backend/src/main.py` for the FastAPI app.
-    *   Define the `/process-pdf` endpoint (accepting file uploads).
-    *   Adapt `run_pipeline()` logic to be called by the endpoint.
+1.  **Implement Task 2.1a: Idempotency Check:**
+    *   Add logic to `/process-pdf` to calculate SHA256 hash of uploaded file content.
+    *   Implement mechanism to check if hash exists before processing (e.g., check Weaviate metadata).
+    *   Store the hash upon successful processing.
+2.  **Implement Task 2.1b: Asynchronous Processing:**
+    *   Refactor `/process-pdf` to use `BackgroundTasks`.
+    *   Move file saving, `process_pdf` call, Weaviate storage, and cleanup into a background function.
+    *   Update endpoint to return `202 Accepted` immediately.
+3.  **Log Deferred Tasks:** Add Input Validation/Security and Config Robustness to a backlog/technical debt tracker (or note in `progress.md`).
+4.  **Begin Task 2.2:** Start LangChain integration.
