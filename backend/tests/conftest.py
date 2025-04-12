@@ -21,7 +21,7 @@ if str(project_root) not in sys.path:
 print(f"Python path in conftest: {sys.path}")
 
 # Mock out some tricky modules that might cause issues during tests
-sys.modules['sentence_transformers'] = MagicMock()
+# sys.modules['sentence_transformers'] = MagicMock() # Commented out for integration tests
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_environment():
