@@ -1,11 +1,12 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
-import './App.css'
-import ChatInterface from './components/ChatInterface'
-import themeOptions from './theme' // We'll create this next
+import themeOptions from './theme';
+
+// Import the components
+import Sidebar from './components/Sidebar';
+import ChatContainer from './components/ChatContainer';
+import { LanguageProvider } from './components/LanguageToggle';
 
 // Create MUI theme instance
 const theme = createTheme(themeOptions);
@@ -14,22 +15,35 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ bgcolor: 'grey.50', minHeight: '100vh', py: 5 }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 10 }}>
-            <Typography variant="h3" component="h1" sx={{ mb: 2, color: 'primary.main' }}>
-              Yojna Khojna
-            </Typography>
-            <Typography variant="h6" sx={{ color: 'text.secondary' }}>
-              Ask questions about government schemes and get accurate answers
-            </Typography>
-          </Box>
+      {/* Global styles are now in index.css */}
+      <LanguageProvider>
+        {/* Main application layout */}
+        <Box 
+          data-testid="main-layout-box"
+          sx={{ 
+            display: 'flex', 
+            height: '100vh',
+            overflow: 'hidden',
+            flexDirection: { xs: 'column', sm: 'row' },
+            p: { xs: 1, sm: 2 },
+            gap: 2
+          }}
+        >
+          {/* Mobile-friendly sidebar */}
+          <Sidebar 
+            sx={{ 
+              width: { xs: '100%', sm: '48px' },
+              height: { xs: '48px', sm: 'auto' },
+              flexDirection: { xs: 'row', sm: 'column' }
+            }} 
+          />
           
-          <ChatInterface />
-        </Container>
-      </Box>
+          {/* Main chat container - Remove hardcoded userName */}
+          <ChatContainer />
+        </Box>
+      </LanguageProvider>
     </ThemeProvider>
-  )
+  );
 }
 
-export default App
+export default App;
