@@ -4,6 +4,7 @@ import logging
 import hashlib
 from pathlib import Path
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware # Import CORS Middleware
 from contextlib import contextmanager
 import weaviate
 import weaviate.classes as wvc # Import Weaviate classes for filtering
@@ -32,6 +33,29 @@ app = FastAPI(
     description="API for the AI-Powered Government Scheme Assistant",
     version="0.1.0",
 )
+
+# === CORS Configuration ===
+# Allow requests from your frontend development server
+origins = [
+    "http://localhost:5173", # Vite default dev server port
+    "http://localhost:3000", # Common alternative (e.g., Create React App)
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins, # List of allowed origins
+    allow_credentials=True,
+    allow_methods=["*"], # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"], # Allow all headers
+)
+# =========================
+
+# === DIAGNOSTIC ROUTE ===
+@app.get("/test-route")
+async def test_route():
+    return {"message": "Test route is active!"}
+# =======================
 
 @contextmanager
 def temporary_file_path(upload_file: UploadFile) -> Path:

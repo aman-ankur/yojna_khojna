@@ -23,6 +23,11 @@ a:hover {
 }
 
 body {
+  background-color: #f9f9fc;
+  background-image: 
+    radial-gradient(at 100% 0%, rgba(193, 89, 171, 0.03) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(105, 82, 210, 0.03) 0, transparent 50%);
+  background-attachment: fixed;
   margin: 0;
   display: flex;
   place-items: center;
@@ -65,4 +70,32 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* Chat UI animations */
+@keyframes pulse {
+  0% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0.4; transform: scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.message-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 }

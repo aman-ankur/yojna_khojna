@@ -5,6 +5,7 @@ from fastapi import UploadFile, BackgroundTasks
 from fastapi.testclient import TestClient
 from pathlib import Path
 import io
+import asyncio # Import asyncio for checks
 
 # Import the FastAPI app instance from your main module
 # Adjust the import path based on your project structure
@@ -254,3 +255,75 @@ def test_run_processing_pipeline_processing_error(
     # TODO: Add check for logging the error
 
 # Add more tests for other error cases in run_processing_pipeline (e.g., Weaviate errors) 
+
+@pytest.mark.asyncio
+@patch('backend.src.main.create_conversational_rag_chain')
+async def test_chat_endpoint_success_format(mock_create_chain):
+    """Test the /chat endpoint, verifying mock execution and response format."""
+    # --- Mock Setup --- # 
+    # 1. Define the dictionary we want ainvoke to ultimately return
+    mock_result_dict = {
+        'answer': 'This is a mock AI answer.',
+        'chat_history': [
+            ["Test question?", "This is a mock AI answer."]
+        ] 
+    }
+
+    # Flag to verify execution
+    mock_ainvoke_was_run = False
+
+    # 2. Create a regular MagicMock to represent the chain instance
+    mock_chain_instance = MagicMock()
+    
+    # 3. Define an actual async function to replace the ainvoke method
+    async def mock_ainvoke_func(*args, **kwargs):
+        nonlocal mock_ainvoke_was_run
+        mock_ainvoke_was_run = True # Set flag when run
+        print("\n--- mock_ainvoke_func executed --- ") # Debug print
+        return mock_result_dict
+    
+    # 4. Assign our custom async function to the ainvoke attribute 
+    assert asyncio.iscoroutinefunction(mock_ainvoke_func), "mock_ainvoke_func should be a coroutine function"
+    mock_chain_instance.ainvoke = mock_ainvoke_func 
+    
+    # 5. Configure the patched factory to return our prepared mock chain instance
+    mock_create_chain.return_value = mock_chain_instance
+    # --- End Mock Setup --- #
+
+    request_data = {
+        "question": "Test question?",
+        "chat_history": []
+    }
+
+    # Use TestClient 
+    print("\n--- Making request with TestClient --- ")
+    with TestClient(app) as client:
+        response = client.post("/chat", json=request_data)
+    print(f"--- TestClient response status: {response.status_code} ---")
+
+    # --- Assertions --- #
+    # 1. Verify the mock async function was actually executed by the await in the endpoint
+    assert mock_ainvoke_was_run is True, "The mocked async ainvoke function was not executed."
+    
+    # 2. Verify the response status and content (original assertions)
+    assert response.status_code == 200, f"Expected 200 OK, got {response.status_code}. Response: {response.text}"
+    response_json = response.json()
+    assert "answer" in response_json
+    assert "updated_history" in response_json
+    assert response_json["answer"] == "This is a mock AI answer."
+
+    # Assert the structure of updated_history
+    assert isinstance(response_json["updated_history"], list)
+    assert len(response_json["updated_history"]) == 1
+    first_turn = response_json["updated_history"][0]
+    assert isinstance(first_turn, list)
+    assert len(first_turn) == 2
+    assert isinstance(first_turn[0], str)
+    assert isinstance(first_turn[1], str)
+    assert first_turn[0] == "Test question?"
+    assert first_turn[1] == "This is a mock AI answer."
+
+    # Verify factory mock
+    mock_create_chain.assert_called_once()
+
+# ... (rest of test_main.py) ... 

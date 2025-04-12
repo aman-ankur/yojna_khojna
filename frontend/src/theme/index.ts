@@ -1,61 +1,82 @@
 import { ThemeOptions } from '@mui/material/styles';
-import { blue, grey } from '@mui/material/colors';
 
 // Define custom theme options for MUI
 const themeOptions: ThemeOptions = {
   palette: {
     primary: {
-      main: blue[700], // Primary color (similar to brand.500/brand.700)
+      main: '#8667D0', // Purple accent color
     },
     secondary: {
-      main: grey[500],
+      main: '#7254C6', // Darker purple for hover states
     },
     background: {
-      default: grey[50],
-      paper: '#ffffff',
+      default: '#FFFFFF', // White background
+      paper: '#FFFFFF', // White for cards/paper elements
     },
     text: {
-      primary: grey[900],
-      secondary: grey[600],
+      primary: '#1A1A1A',
+      secondary: 'rgba(0,0,0,0.6)',
     },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Noto Sans", "Noto Sans Devanagari", "Roboto", "Helvetica", "Arial", sans-serif',
     h3: {
-      fontWeight: 700,
+      fontWeight: 500,
+      fontSize: '2rem',
     },
-    h6: {
-      fontWeight: 400,
+    h4: {
+      fontWeight: 500,
+      fontSize: '1.5rem',
     },
-    // Customize other variants as needed
+    body1: {
+      fontSize: '0.9rem',
+    },
+    body2: {
+      fontSize: '0.85rem',
+    },
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           textTransform: 'none', // Prevent uppercase buttons
-          borderRadius: 8,
+          borderRadius: '20px',
         },
       },
-      variants: [
-        {
-          props: { variant: 'contained' },
-          style: {
-            boxShadow: 'none',
-            '&:hover': {
-              boxShadow: 'none',
-            },
-          },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: '8px',
         },
-      ],
+      },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)', // Subtle shadow
+          boxShadow: 'none',
         },
       },
     },
+    MuiButtonBase: {
+      styleOverrides: {
+        root: {
+          '&:focus-visible': {
+            outline: '2px solid #8667D0',
+            outlineOffset: '2px'
+          }
+        }
+      }
+    },
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          '&:focus-within': {
+            boxShadow: '0 0 0 2px #8667D0'
+          }
+        }
+      }
+    }
   },
 };
 
