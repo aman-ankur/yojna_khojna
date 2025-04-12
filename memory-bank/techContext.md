@@ -63,3 +63,16 @@ This document outlines the specific technologies and tools proposed for the Proo
 *   **Class Name**: `YojnaChunk` (This is the schema class name used to store processed document chunks).
 *   **Text Property**: `text` (This is the property within `YojnaChunk` storing the chunk's text content).
 *   **LangChain Integration**: Using `langchain-weaviate` package for v4 client compatibility.
+
+### Conversation History Management
+
+*   **Current Approach (Cost Optimized for POC):**
+    *   Uses LangChain's `create_history_aware_retriever` pattern.
+    *   An initial LLM call rephrases the user's latest question based on the chat history to create a standalone query for the retriever.
+    *   The *final* question-answering prompt (passed to `create_stuff_documents_chain`) **does not** include the full chat history. It only uses the (potentially rephrased) question and the retrieved document context.
+    *   **Rationale:** This significantly reduces costs associated with the final LLM call, as the prompt size doesn't grow linearly with the conversation. It forces the final answer to be strongly grounded in the retrieved documents, which aligns well with the goal of providing factual scheme information. The history-aware retriever ensures relevant context is used for document fetching.
+    *   **Trade-off:** The final answer might be slightly less conversational (won't explicitly reference past turns unless captured in the rephrased question).
+*   **Future Alternatives (if needed):**
+    *   **Windowed History:** Pass only the last `k` turns to the final QA prompt (simpler, but may lose context).
+    *   **Summarization Memory:** Use an LLM to summarize older history (preserves more context, but adds complexity and summarization cost).
+    *   **Full History (Original POC approach):** Pass the entire history to the final QA prompt (most conversational context, highest potential cost).
