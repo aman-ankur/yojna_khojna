@@ -5,6 +5,8 @@ pytesseract
 Pillow
 weaviate-client
 langchain
+langchain-community
+langchain-openai
 sentence-transformers
 python-dotenv
 python-multipart
