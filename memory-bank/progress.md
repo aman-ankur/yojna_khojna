@@ -77,12 +77,13 @@
 
 **Current / Next Task:**
 
-*   [ ] **2.2: Integrate LangChain for RAG:** (Renumbered/Refined from original plan)
+*   [x] **2.2: Integrate LangChain for RAG:** (Renumbered/Refined from original plan)
     *   Integrate `langchain` components for building a Retrieval-Augmented Generation chain.
     *   Connect the chain to the Weaviate vector store as the retriever.
+    *   *Status: Completed - Added dependencies, RAG module structure, Weaviate connection (`vector_store.py`), and integrated retriever into basic chain (`chain.py`).*
 
 *   [ ] **2.3: Integrate LLM API:** (Renumbered/Refined)
-    *   Choose and configure an LLM API client (e.g., OpenAI, Anthropic).
+    *   Choose and configure an LLM API client (e.g., Anthropic - confirmed).
     *   Integrate the LLM into the LangChain RAG setup.
 *   [ ] **2.4: Build Core RAG Chain:** (Renumbered/Refined)
     *   Construct the primary LangChain sequence: Retriever -> Prompt -> LLM -> Output Parser.
