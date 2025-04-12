@@ -63,23 +63,24 @@
     *   Added `__init__.py` files for package structure.
     *   Enabled automatic Swagger (`/docs`) and ReDoc (`/redoc`) documentation.
 
-*   [ ] **2.1a: Implement Idempotency Check:**
-    *   Add SHA256 hash calculation for uploaded PDF content.
-    *   Check against stored hashes (e.g., in Weaviate metadata) before processing.
-    *   Store hash on successful processing.
-*   [ ] **2.1b: Implement Asynchronous Processing:**
-    *   Refactor `/process-pdf` to use FastAPI `BackgroundTasks`.
-    *   Return `202 Accepted` immediately.
-*   [ ] **2.1c: Log Deferred Improvements:** (Optional tracking task)
-    *   Note Input Validation/Security and Config Robustness for future work.
+*   [x] **2.1a: Implement Idempotency Check:**
+    *   Added SHA256 hash calculation for uploaded PDF content.
+    *   Added Weaviate query to check for existing `document_hash`.
+    *   Updated schema and batch import to store `document_hash`.
+    *   Endpoint returns `{"status": "exists"}` if hash found.
+*   [x] **2.1b: Implement Asynchronous Processing:**
+    *   Refactored `/process-pdf` to use FastAPI `BackgroundTasks`.
+    *   Moved core processing logic to `run_processing_pipeline` function.
+    *   Endpoint returns `{"status": "processing_scheduled"}` (202 Accepted implicitly via BackgroundTasks) immediately for new files.
+*   [x] **2.1c: Log Deferred Improvements:** (Optional tracking task)
+    *   Note: Input Validation/Security and Config Robustness identified for future implementation.
 
 **Current / Next Task:**
-
-*   [ ] **2.1a: Implement Idempotency Check**
 
 *   [ ] **2.2: Integrate LangChain for RAG:** (Renumbered/Refined from original plan)
     *   Integrate `langchain` components for building a Retrieval-Augmented Generation chain.
     *   Connect the chain to the Weaviate vector store as the retriever.
+
 *   [ ] **2.3: Integrate LLM API:** (Renumbered/Refined)
     *   Choose and configure an LLM API client (e.g., OpenAI, Anthropic).
     *   Integrate the LLM into the LangChain RAG setup.

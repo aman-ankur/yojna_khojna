@@ -5,6 +5,7 @@ import hashlib
 from pathlib import Path
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
 from contextlib import contextmanager
+import weaviate
 import weaviate.classes as wvc # Import Weaviate classes for filtering
 
 # Import pipeline components and exceptions

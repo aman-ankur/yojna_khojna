@@ -11,4 +11,5 @@ python-multipart
 
 # Testing
 pytest
-pytest-mock 
+pytest-mock
+pytest-asyncio # For testing async FastAPI code 
