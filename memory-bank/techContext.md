@@ -55,3 +55,11 @@ This document outlines the specific technologies and tools proposed for the Proo
 ### Data Management
 
 *   **PDF Parsing:** `
+
+### Vector Store: Weaviate
+
+*   **Reasoning**: Open-source, good performance, supports hybrid search, and integrates well with LangChain.
+*   **Configuration**: Deployed locally via Docker Compose (`docker-compose.yml`).
+*   **Class Name**: `YojnaChunk` (This is the schema class name used to store processed document chunks).
+*   **Text Property**: `text` (This is the property within `YojnaChunk` storing the chunk's text content).
+*   **LangChain Integration**: Using `langchain-weaviate` package for v4 client compatibility.

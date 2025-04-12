@@ -10,6 +10,8 @@ langchain-openai
 sentence-transformers
 python-dotenv
 python-multipart
+langchain-anthropic
+langchain-weaviate
 
 # Testing
 pytest
