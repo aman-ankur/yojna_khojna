@@ -4,8 +4,8 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-# Placeholder for vector store retriever (will be initialized later)
-# from .vector_store import get_retriever
+# Import the retriever function from our vector store module
+from .vector_store import get_retriever
 
 # Placeholder for LLM (will be initialized later)
 # from .llm import get_chat_model
@@ -33,28 +33,28 @@ def get_rag_chain():
 
     # --- Placeholders for actual components ---
     # These will be replaced with actual retriever and LLM instances
-    # retriever = get_retriever() # Task 2.3
+    retriever = get_retriever() # Task 2.3 - Done!
     # llm = get_chat_model()      # Task 2.4
 
     # --- Basic Chain Structure (using placeholders for now) ---
     # This demonstrates the flow: context retrieval -> prompt formatting -> LLM -> output parsing.
     # We use RunnablePassthrough for components not yet implemented.
-    rag_chain = (
-        {"context": RunnablePassthrough(), "question": RunnablePassthrough()} # Placeholder for retriever
-        | prompt
-        # | llm # Placeholder for LLM
-        | StrOutputParser()
-    )
-
-    # In a real scenario, the chain would look more like:
     # rag_chain = (
-    #     {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    #     {"context": RunnablePassthrough(), "question": RunnablePassthrough()} # Placeholder for retriever
     #     | prompt
-    #     | llm
+    #     # | llm # Placeholder for LLM
     #     | StrOutputParser()
     # )
 
-    print("Placeholder RAG chain created. Integration pending tasks 2.3 & 2.4.")
+    # Updated chain using the actual retriever
+    rag_chain = (
+        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+        | prompt
+        # | llm # Still needs Task 2.4
+        | StrOutputParser() # Output parser remains
+    )
+
+    print("RAG chain created with Weaviate retriever. LLM integration pending task 2.4.")
     # For now, return a simple placeholder that doesn't do much
     # This allows the API endpoint (Task 2.6) to be created without errors.
     return lambda input_dict: f"Processing question: {input_dict.get('question', '')} (RAG chain not fully implemented)"

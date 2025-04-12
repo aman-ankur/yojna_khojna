@@ -11,7 +11,7 @@ This document outlines the specific technologies and tools proposed for the Proo
     *   OCR: Tesseract (with Hindi language pack)
     *   NLP/Information Extraction: Hugging Face Transformers (specifically fine-tuned NER models)
 *   **Conversational AI:**
-    *   LLM: OpenAI API or Anthropic Claude API
+    *   LLM: Anthropic Claude API
     *   Orchestration/RAG: LangChain
 *   **State Management:** Redis
 *   **Image Understanding:**
