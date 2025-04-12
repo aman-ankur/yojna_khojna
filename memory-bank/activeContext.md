@@ -16,6 +16,7 @@ Begin Phase 2, Task 2.2: Integrate LangChain for RAG.
     *   Refactored `/process-pdf` using FastAPI `BackgroundTasks`.
     *   Endpoint now returns immediately, processing occurs in background.
 *   Added unit tests for the new functionality in `test_main.py`.
+*   **Evaluated Async Approaches:** Decided to stick with `BackgroundTasks` for now (simplicity) and defer migration to a dedicated Task Queue (Celery/Redis) for better scalability/resilience until later phases (e.g., Deployment Prep).
 
 ## Blockers
 *   None currently.

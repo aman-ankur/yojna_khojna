@@ -48,23 +48,10 @@ This document outlines the specific technologies and tools proposed for the Proo
 *   **Low Bandwidth Optimization:** Frontend and API design must consider users with limited internet connectivity.
 *   **Data Privacy & Security:** Handling potentially sensitive user information (profile, uploaded images) requires secure storage and processing practices.
 *   **Scalability:** While the POC focuses on core functionality, the architecture should allow for future scaling.
+*   **Asynchronous Processing Strategy (PDF Ingestion):**
+    *   **Current:** Using FastAPI's built-in `BackgroundTasks` for the `/process-pdf` endpoint. This makes the API endpoint non-blocking for the client (suitable for initial development and testing).
+    *   **Future Enhancement:** Plan to migrate to a dedicated Task Queue (e.g., Celery with Redis) for improved scalability, resilience (retries, persistence), and resource isolation, especially to handle bulk uploads efficiently and prevent heavy processing from impacting API server responsiveness. This migration is likely targeted for later phases (e.g., Deployment Prep).
 
 ### Data Management
 
-*   **PDF Parsing:** `pdfplumber` for text extraction, `pytesseract` + `Pillow` for OCR fallback (handling English and Hindi - `eng+hin`).
-*   **Text Chunking:** `langchain` (`RecursiveCharacterTextSplitter`).
-*   **Development Environment:** Python 3.10+, Virtual Environment (e.g., `venv`).
-*   **Code Formatting/Linting:** (To be defined - e.g., Black, Flake8/Ruff)
-
-### Key Modules/Files (Backend - `backend/src`)
-
-*   `main_pipeline.py`: Orchestrates the data ingestion process.
-*   `schemas.py`: Defines Pydantic models (e.g., `DocumentChunk`).
-*   `data_pipeline/`: Contains modules for specific processing steps.
-    *   `pdf_extractor.py`: Handles PDF text and OCR extraction.
-    *   `document_chunker.py`: Handles text chunking using LangChain.
-    *   `(Future) embedding_generator.py`: Handles text embedding generation.
-    *   `(Future) weaviate_loader.py`: Handles loading data into Weaviate.
-*   `(Future) api/`: Contains FastAPI application and endpoints.
-*   `(Future) core/`: Core logic, configuration, etc.
-*   `(Future) models/`: ML model loading/interaction logic.
+*   **PDF Parsing:** `
