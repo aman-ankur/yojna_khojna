@@ -115,6 +115,15 @@ def test_ensure_schema_exists_already_exists(mock_weaviate_client_v4):
     """Tests schema creation is skipped if collection exists."""
     mock_collections = mock_weaviate_client_v4.collections
     mock_collections.exists.return_value = True
+    
+    # Mock the config.get() method to include a document_hash property
+    mock_collection = mock_collections.get.return_value
+    mock_config = mock_collection.config.get.return_value
+    
+    # Create a mock property with name "document_hash"
+    mock_property = MagicMock()
+    mock_property.name = "document_hash"
+    mock_config.properties = [mock_property]
 
     weaviate_client.ensure_schema_exists(mock_weaviate_client_v4)
 

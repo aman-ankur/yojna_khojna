@@ -4,9 +4,12 @@ import logging
 import hashlib
 from pathlib import Path
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware # Import CORS Middleware
 from contextlib import contextmanager
 import weaviate
 import weaviate.classes as wvc # Import Weaviate classes for filtering
+from weaviate.exceptions import WeaviateQueryError, WeaviateConnectionError as WeaviateV4ConnectionError # Import necessary exceptions
+import sys # Import sys for exit
 
 # Import pipeline components and exceptions
 from .main_pipeline import process_pdf
@@ -32,6 +35,29 @@ app = FastAPI(
     description="API for the AI-Powered Government Scheme Assistant",
     version="0.1.0",
 )
+
+# === CORS Configuration ===
+# Allow requests from your frontend development server
+origins = [
+    "http://localhost:5173", # Vite default dev server port
+    "http://localhost:3000", # Common alternative (e.g., Create React App)
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins, # List of allowed origins
+    allow_credentials=True,
+    allow_methods=["*"], # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"], # Allow all headers
+)
+# =========================
+
+# === DIAGNOSTIC ROUTE ===
+@app.get("/test-route")
+async def test_route():
+    return {"message": "Test route is active!"}
+# =======================
 
 @contextmanager
 def temporary_file_path(upload_file: UploadFile) -> Path:
@@ -74,9 +100,9 @@ async def check_hash_exists(client: weaviate.WeaviateClient, file_hash: str) -> 
             filters=wvc.query.Filter.by_property("document_hash").equal(file_hash)
         )
         return len(response.objects) > 0
-    except WeaviateBaseError as e: # Catch specific Weaviate errors
-        logger.error(f"Weaviate query error checking hash {file_hash}: {e}", exc_info=True)
-        # Treat query errors as if hash doesn't exist to allow processing attempt,
+    except (WeaviateQueryError, WeaviateV4ConnectionError) as e:
+        logger.error(f"Weaviate error checking hash {file_hash}: {e}", exc_info=True)
+        # Treat query/connection errors as if hash doesn't exist to allow processing attempt,
         # but log error. Alternatively, raise HTTPException 503.
         return False
     except Exception as e:
@@ -265,13 +291,18 @@ async def chat_endpoint(query: ChatQuery):
         # Invoke the chain with the question AND the formatted history
         logger.debug("Invoking conversational RAG chain...")
         # The chain expects a dictionary with 'input' and 'chat_history' keys
-        response = rag_chain.invoke({
+        response = await rag_chain.ainvoke({
             "input": query.question,
             "chat_history": formatted_history
         })
 
-        # The response from create_stuff_documents_chain is typically the string answer
-        answer = response
+        # The response should be a dictionary with 'answer' and 'chat_history' keys
+        if isinstance(response, dict) and 'answer' in response:
+            answer = response['answer']
+        else:
+            # Fall back to using the response directly if it's not a dict with expected keys
+            answer = response
+            
         logger.info(f"Conversational RAG chain generated answer.")
 
         if not answer:
@@ -294,5 +325,35 @@ async def chat_endpoint(query: ChatQuery):
         logger.critical(f"Unexpected error processing chat query '{query.question}': {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error while processing the chat query.")
 
+
+# Add more endpoints later 
+
+# --- Application Startup ---
+@app.on_event("startup")
+async def startup_event():
+    """Runs on application startup. Ensures Weaviate connection and schema.
+    If connection or schema check fails, logs FATAL error and exits.
+    """
+    logger.info("Starting Yojna Khojna API...")
+    client = None
+    try:
+        logger.info("Connecting to Weaviate to ensure schema exists...")
+        client = get_weaviate_client()
+        ensure_schema_exists(client) # Ensure schema exists and is up-to-date
+        logger.info("Weaviate connection and schema check successful.")
+    except (WeaviateConnectionError, WeaviateSchemaError) as e:
+        logger.error(f"FATAL: Failed to connect to Weaviate or ensure schema during startup: {e}", exc_info=True)
+        # Exit the application if critical setup fails
+        # Note: In a containerized environment, the orchestrator should handle restarts.
+        # For local dev, exiting makes the failure obvious.
+        sys.exit(f"Startup failed due to Weaviate error: {e}")
+    # Removed the broad Exception catch to make failures fatal
+    # except Exception as e:
+    #     logger.error(f"FATAL: Unexpected error during startup: {e}", exc_info=True)
+    #     sys.exit(f"Startup failed due to unexpected error: {e}")
+    finally:
+        if client and client.is_connected():
+            client.close()
+            logger.info("Closed Weaviate client connection after startup check.")
 
 # Add more endpoints later 
