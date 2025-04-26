@@ -51,19 +51,26 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
     setError(null);
     
     try {
+      // Transform frontend message history (Message[]) to backend expected format (List[Tuple[str, str]])
+      const backendHistory: [string, string][] = [];
+      for (let i = 0; i < messages.length; i += 2) {
+        // Ensure we have a pair of user and assistant messages
+        if (messages[i]?.role === 'user' && messages[i+1]?.role === 'assistant') {
+          backendHistory.push([messages[i].content, messages[i+1].content]);
+        }
+        // Handle potential edge cases like the last message being a user message
+        // For this specific chain type, only complete pairs are usually needed for history.
+      }
+
       const response = await chatService.sendMessage({
         question: text,
-        chat_history: messages // Send history before the new user message
+        chat_history: backendHistory // Send the transformed history
       });
       
-      // Transform the backend history to frontend format if needed
-      // Depending on your backend response structure
-      if (Array.isArray(response.updated_history)) {
-        setMessages(response.updated_history);
-      } else {
-        // If the backend doesn't return updated history, add the answer as a new message
-        setMessages(prev => [...prev, { role: 'assistant', content: response.answer }]);
-      }
+      // Directly add the assistant's response to the messages state
+      const assistantMessage: Message = { role: 'assistant', content: response.answer };
+      setMessages(prev => [...prev, assistantMessage]);
+
     } catch (err) {
       console.error('Error communicating with the backend:', err);
       setError(t.error);
