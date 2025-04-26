@@ -6,7 +6,8 @@ from urllib.parse import urlparse
 from weaviate.exceptions import (
     WeaviateConnectionError as WeaviateV4ConnectionError,
     WeaviateStartUpError,
-    WeaviateQueryError # Keep this for potential query issues
+    WeaviateQueryError, # Keep this for potential query issues
+    WeaviateBaseError, # Added for the new WeaviateBaseError
     # Removed WeaviateInsertUpdateError as it's not directly importable/used this way
     # WeaviateError is not directly importable as a base catch-all
 )
@@ -35,13 +36,27 @@ def get_weaviate_client() -> weaviate.WeaviateClient: # Return type is non-optio
     logger.info(f"Attempting to connect to Weaviate at {weaviate_url}...")
     client = None # Initialize client to None
     try:
-        # Extract host and port for connect_to_local
-        parts = weaviate_url.replace("http://", "").replace("https://", "").split(":")
-        host = parts[0]
-        port = int(parts[1]) if len(parts) > 1 else 8080 # Default port if not specified
-
-        # Consider using connect_to_custom for more options like headers/auth later
-        client = weaviate.connect_to_local(host=host, port=port)
+        # Extract host and port for connect methods
+        url_parts = weaviate_url.replace("http://", "").replace("https://", "").split(":")
+        host = url_parts[0]
+        port = int(url_parts[1]) if len(url_parts) > 1 else 8080 # Default port if not specified
+        
+        # Determine if we're using HTTPS
+        is_secure = weaviate_url.startswith("https://")
+        
+        # Use connect_to_local for localhost connections, connect_to_custom for other hosts
+        if host == "localhost" or host == "127.0.0.1":
+            client = weaviate.connect_to_local(host=host, port=port)
+        else:
+            # For custom URLs, use connect_to_custom with appropriate parameters
+            client = weaviate.connect_to_custom(
+                http_host=host,
+                http_port=port,
+                http_secure=is_secure,
+                grpc_host=host,
+                grpc_port=50051,  # Default gRPC port
+                grpc_secure=is_secure
+            )
 
         client.connect()
 
@@ -141,9 +156,9 @@ def ensure_schema_exists(client: weaviate.WeaviateClient):
             logger.info(f"Successfully created Weaviate collection '{CLASS_NAME}'.")
 
     # Catch specific relevant Weaviate exceptions for schema operations
-    except (WeaviateQueryError, WeaviateV4ConnectionError, WeaviateStartUpError) as e:
+    except (WeaviateQueryError, WeaviateV4ConnectionError, WeaviateStartUpError, WeaviateBaseError) as e:
         logger.error(f"Weaviate error occurred during schema check/creation for collection '{CLASS_NAME}': {e}", exc_info=True)
-        # Use the custom WeaviateSchemaError for consistency
+        # Use the custom WeaviateSchemaError for consistency with the expected message format in tests
         raise WeaviateSchemaError(f"Failed to ensure Weaviate schema '{CLASS_NAME}': {e}") from e
     # Catch the specific error raised if deleting the property failed
     except WeaviateSchemaError as e:
@@ -151,7 +166,7 @@ def ensure_schema_exists(client: weaviate.WeaviateClient):
         raise e
     except Exception as e:
         logger.error(f"Unexpected error occurred during schema check/creation for collection '{CLASS_NAME}': {e}", exc_info=True)
-        raise WeaviateSchemaError(f"Unexpected error ensuring Weaviate schema '{CLASS_NAME}': {e}") from e
+        raise WeaviateSchemaError(f"Failed to ensure Weaviate schema '{CLASS_NAME}': {e}") from e
 
 def batch_import_chunks(client: weaviate.WeaviateClient, chunks: List[DocumentChunk], document_hash: str):
     """Imports a list of DocumentChunk objects into Weaviate using v4 batching,

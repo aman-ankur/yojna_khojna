@@ -2,7 +2,8 @@
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
+import asyncio
 
 # Import the FastAPI app instance and specific message types for assertions
 from backend.src.main import app
@@ -24,8 +25,8 @@ def client():
 def test_chat_endpoint_success_no_history(mock_create_chain, client):
     """Test successful response with no initial history."""
     # Arrange
-    mock_chain = MagicMock()
-    mock_chain.invoke.return_value = "This is the initial answer."
+    mock_chain = AsyncMock()
+    mock_chain.ainvoke.return_value = "This is the initial answer."
     mock_create_chain.return_value = mock_chain
 
     # Note: chat_history defaults to [] if not provided
@@ -45,15 +46,15 @@ def test_chat_endpoint_success_no_history(mock_create_chain, client):
     assert response_json["answer"] == "This is the initial answer."
     assert response_json["updated_history"] == expected_updated_history
     mock_create_chain.assert_called_once()
-    # Check that invoke was called with correctly formatted history (empty list)
-    mock_chain.invoke.assert_called_once_with(expected_input_to_chain)
+    # Check that ainvoke was called with correctly formatted history (empty list)
+    mock_chain.ainvoke.assert_called_once_with(expected_input_to_chain)
 
 @patch('backend.src.main.create_conversational_rag_chain')
 def test_chat_endpoint_success_with_history(mock_create_chain, client):
     """Test successful response with existing conversation history."""
     # Arrange
-    mock_chain = MagicMock()
-    mock_chain.invoke.return_value = "This is the follow-up answer."
+    mock_chain = AsyncMock()
+    mock_chain.ainvoke.return_value = "This is the follow-up answer."
     mock_create_chain.return_value = mock_chain
 
     initial_history: List[Tuple[str, str]] = [("Question 1", "Answer 1")]
@@ -82,16 +83,16 @@ def test_chat_endpoint_success_with_history(mock_create_chain, client):
     assert response_json["answer"] == "This is the follow-up answer."
     assert response_json["updated_history"] == expected_updated_history
     mock_create_chain.assert_called_once()
-    # Check that invoke was called with correctly formatted history
-    mock_chain.invoke.assert_called_once_with(expected_input_to_chain)
+    # Check that ainvoke was called with correctly formatted history
+    mock_chain.ainvoke.assert_called_once_with(expected_input_to_chain)
 
 
 @patch('backend.src.main.create_conversational_rag_chain')
 def test_chat_endpoint_empty_answer_with_history(mock_create_chain, client):
     """Test response when the RAG chain returns an empty answer with history."""
     # Arrange
-    mock_chain = MagicMock()
-    mock_chain.invoke.return_value = "" # Simulate empty answer
+    mock_chain = AsyncMock()
+    mock_chain.ainvoke.return_value = "" # Simulate empty answer
     mock_create_chain.return_value = mock_chain
 
     initial_history: List[Tuple[str, str]] = [("Q1", "A1")]
@@ -111,7 +112,7 @@ def test_chat_endpoint_empty_answer_with_history(mock_create_chain, client):
     expected_initial_history_json = [[h[0], h[1]] for h in initial_history]
     assert response_json["updated_history"] == expected_initial_history_json
     mock_create_chain.assert_called_once()
-    mock_chain.invoke.assert_called_once_with(expected_input_to_chain)
+    mock_chain.ainvoke.assert_called_once_with(expected_input_to_chain)
 
 # Patch the NEW chain creation function for error tests
 @patch('backend.src.main.create_conversational_rag_chain')
@@ -138,8 +139,8 @@ def test_chat_endpoint_dependency_error(mock_create_chain, client):
 def test_chat_endpoint_unexpected_error(mock_create_chain, client):
     """Test handling of unexpected errors during chain invocation."""
     # Arrange
-    mock_chain = MagicMock()
-    mock_chain.invoke.side_effect = Exception("Something totally unexpected happened")
+    mock_chain = AsyncMock()
+    mock_chain.ainvoke.side_effect = Exception("Something totally unexpected happened")
     mock_create_chain.return_value = mock_chain
 
     query_data = {"question": "Another question", "chat_history": [("PrevQ", "PrevA")]}
@@ -155,7 +156,7 @@ def test_chat_endpoint_unexpected_error(mock_create_chain, client):
     assert "detail" in response_json
     assert response_json["detail"] == "Internal server error while processing the chat query."
     mock_create_chain.assert_called_once()
-    mock_chain.invoke.assert_called_once_with(expected_input_to_chain)
+    mock_chain.ainvoke.assert_called_once_with(expected_input_to_chain)
 
 def test_chat_endpoint_invalid_input_history_format(client):
     """Test response when chat_history format is invalid."""

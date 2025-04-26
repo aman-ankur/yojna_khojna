@@ -291,13 +291,18 @@ async def chat_endpoint(query: ChatQuery):
         # Invoke the chain with the question AND the formatted history
         logger.debug("Invoking conversational RAG chain...")
         # The chain expects a dictionary with 'input' and 'chat_history' keys
-        response = rag_chain.invoke({
+        response = await rag_chain.ainvoke({
             "input": query.question,
             "chat_history": formatted_history
         })
 
-        # The response from create_stuff_documents_chain is typically the string answer
-        answer = response
+        # The response should be a dictionary with 'answer' and 'chat_history' keys
+        if isinstance(response, dict) and 'answer' in response:
+            answer = response['answer']
+        else:
+            # Fall back to using the response directly if it's not a dict with expected keys
+            answer = response
+            
         logger.info(f"Conversational RAG chain generated answer.")
 
         if not answer:
