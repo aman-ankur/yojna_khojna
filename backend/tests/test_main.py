@@ -258,7 +258,6 @@ def test_run_processing_pipeline_processing_error(
 
 # Add more tests for other error cases in run_processing_pipeline (e.g., Weaviate errors) 
 
-@pytest.mark.skipif(os.environ.get('CI') == 'true', reason="Skip in CI environment due to Weaviate connection issues")
 @pytest.mark.asyncio
 @patch('backend.src.main.create_conversational_rag_chain')
 async def test_chat_endpoint_success_format(mock_create_chain):
