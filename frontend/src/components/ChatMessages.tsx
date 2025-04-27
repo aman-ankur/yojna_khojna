@@ -1,4 +1,4 @@
-import { FC, ReactNode } from 'react';
+import { FC, ReactNode, useState } from 'react';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -10,13 +10,40 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import CircleIcon from '@mui/icons-material/Circle';
 
 import { Message } from '../services/api';
+import SuggestedQuestions, { SuggestedQuestion } from './SuggestedQuestions';
+import { useSuggestions } from '../hooks/useSuggestions';
 
 interface ChatMessagesProps {
   messages: Message[];
   isLoading?: boolean;
+  onSendMessage: (message: string) => void;
 }
 
-const ChatMessages: FC<ChatMessagesProps> = ({ messages, isLoading = false }) => {
+const ChatMessages: FC<ChatMessagesProps> = ({ messages, isLoading = false, onSendMessage }) => {
+  // Get the last question and answer for suggested questions
+  const lastQuestion = messages.length > 0 && messages[messages.length - 2]?.role === 'user'
+    ? messages[messages.length - 2].content
+    : '';
+  
+  const lastAnswer = messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
+    ? messages[messages.length - 1].content
+    : '';
+
+  const { 
+    suggestions, 
+    isLoading: suggestionsLoading 
+  } = useSuggestions(lastQuestion, lastAnswer, messages);
+
+  // Safe function to handle question clicks
+  const handleQuestionClick = (question: string) => {
+    // Type check to make sure onSendMessage is a function before calling it
+    if (typeof onSendMessage === 'function') {
+      onSendMessage(question);
+    } else {
+      console.error('onSendMessage is not a function');
+    }
+  };
+
   return (
     <Box sx={{ 
       flex: 1, 
@@ -42,11 +69,23 @@ const ChatMessages: FC<ChatMessagesProps> = ({ messages, isLoading = false }) =>
       )}
       
       {messages.map((message, index) => (
-        message.role === 'user' ? (
-          <UserMessage key={index} content={message.content} />
-        ) : (
-          <AssistantMessage key={index} content={message.content} />
-        )
+        <Box key={index}>
+          {message.role === 'user' ? (
+            <UserMessage content={message.content} />
+          ) : (
+            <>
+              <AssistantMessage content={message.content} />
+              {/* Only show suggestions after the last assistant message and when not loading */}
+              {index === messages.length - 1 && !isLoading && (
+                <SuggestedQuestions 
+                  suggestions={suggestions}
+                  onQuestionClick={handleQuestionClick}
+                  isLoading={suggestionsLoading}
+                />
+              )}
+            </>
+          )}
+        </Box>
       ))}
       
       {isLoading && <TypingIndicator />}

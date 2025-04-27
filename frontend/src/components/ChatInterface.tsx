@@ -17,6 +17,7 @@ import Button from '@mui/material/Button';
 
 import { chatService, Message } from '../services/api';
 import LoadingIndicator from './LoadingIndicator';
+import ChatMessages from './ChatMessages';
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -35,14 +36,21 @@ const ChatInterface = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const userMessage: Message = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
-    const currentInput = input;
-    setInput('');
-    setIsLoading(true);
-    setError(null);
+    await sendMessage(input);
+  };
+
+  // Send message function that can be used by both the form submission and suggested questions
+  const sendMessage = async (message: string): Promise<void> => {
+    if (!message.trim()) return;
 
     try {
+      const userMessage: Message = { role: 'user', content: message };
+      setMessages(prev => [...prev, userMessage]);
+      const currentInput = message;
+      setInput('');
+      setIsLoading(true);
+      setError(null);
+
       const response = await chatService.sendMessage({
         question: currentInput, // Use the captured input
         chat_history: messages // Send history *before* the new user message
@@ -88,49 +96,11 @@ const ChatInterface = () => {
             </Typography>
           ) : (
             <Stack spacing={2} sx={{ p: 1 }}>
-              {messages.map((message, index) => (
-                <Stack
-                  key={index}
-                  direction="row"
-                  spacing={1}
-                  justifyContent={message.role === 'user' ? 'flex-end' : 'flex-start'}
-                >
-                  {message.role === 'assistant' && (
-                    <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>A</Avatar>
-                  )}
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: 1.5,
-                      borderRadius: 2,
-                      bgcolor: message.role === 'user' ? 'background.paper' : '#e3f2fd',
-                      maxWidth: '80%',
-                      border: message.role === 'user' ? `1px solid ${grey[300]}` : 'none',
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {message.content}
-                    </Typography>
-                  </Paper>
-                  {message.role === 'user' && (
-                    <Avatar sx={{ bgcolor: 'primary.dark', width: 32, height: 32 }}>U</Avatar>
-                  )}
-                </Stack>
-              ))}
-
-              {/* Show loading indicator */} 
-              {isLoading && (
-                 <Stack
-                  direction="row"
-                  spacing={1}
-                  justifyContent={'flex-start'}
-                >
-                    <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>A</Avatar>
-                    <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: grey[100], border: `1px solid ${grey[200]}` }}>
-                      <LoadingIndicator text="Getting answer..." />
-                    </Paper>
-                 </Stack>
-              )}
+              <ChatMessages 
+                messages={messages} 
+                isLoading={isLoading} 
+                onSendMessage={sendMessage}
+              />
               <div ref={messagesEndRef} />
             </Stack>
           )}
