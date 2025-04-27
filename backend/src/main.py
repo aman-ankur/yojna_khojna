@@ -254,6 +254,8 @@ def run_processing_pipeline(pdf_content: bytes, original_filename: str, file_has
 from .schemas import ChatQuery, ChatResponse # Import chat schemas
 # Import the NEW conversational RAG chain function
 from .rag.chain import create_conversational_rag_chain
+# Import the response formatting utility
+from .rag.utils import format_response
 # Import LangChain message types for history formatting
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 from typing import List, Tuple
@@ -288,22 +290,35 @@ async def chat_endpoint(query: ChatQuery):
         # rag_chain = conversational_rag_chain # Use pre-initialized if done at startup
         rag_chain = create_conversational_rag_chain()
 
-        # Invoke the chain with the question AND the formatted history
+        # Invoke the chain with the question, formatted history, and language
         logger.debug("Invoking conversational RAG chain...")
-        # The chain expects a dictionary with 'input' and 'chat_history' keys
-        response = await rag_chain.ainvoke({
+        # The chain expects a dictionary with 'input', 'chat_history', and 'language' keys
+        raw_answer = await rag_chain.ainvoke({
             "input": query.question,
-            "chat_history": formatted_history
+            "chat_history": formatted_history,
+            "language": query.language # Pass the language from the query
         })
 
-        # The response should be a dictionary with 'answer' and 'chat_history' keys
-        if isinstance(response, dict) and 'answer' in response:
-            answer = response['answer']
-        else:
-            # Fall back to using the response directly if it's not a dict with expected keys
-            answer = response
-            
-        logger.info(f"Conversational RAG chain generated answer.")
+        # The response from the chain is expected to be the final string answer
+        if not isinstance(raw_answer, str):
+             logger.warning(f"RAG chain returned unexpected type: {type(raw_answer)}. Attempting to cast to string.")
+             raw_answer = str(raw_answer) # Attempt to cast
+
+        logger.info(f"Conversational RAG chain generated raw answer.")
+
+        if not raw_answer:
+            logger.warning("Conversational RAG chain returned an empty answer.")
+            # Maintain the original history if no answer is generated
+            return ChatResponse(answer="Sorry, I couldn't generate an answer for that question.", updated_history=query.chat_history)
+
+        # --- Apply Response Formatting ---
+        final_answer = format_response(raw_answer, query.language)
+        # ---------------------------------
+
+        # Update the history with the new exchange for the response
+        updated_history = query.chat_history + [(query.question, final_answer)]
+
+        return ChatResponse(answer=final_answer, updated_history=updated_history)
 
         if not answer:
             logger.warning("Conversational RAG chain returned an empty answer.")
@@ -356,4 +371,4 @@ async def startup_event():
             client.close()
             logger.info("Closed Weaviate client connection after startup check.")
 
-# Add more endpoints later 
+# Add more endpoints later
