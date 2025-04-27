@@ -148,3 +148,66 @@ This document outlines the specific technologies and tools proposed for the Proo
 ## Testing
 *   **Framework:** `pytest`
 *   **Utilities:** `pytest-asyncio`, `pytest-mock`, `httpx` (for TestClient)
+
+## Suggested Questions Feature Architecture
+
+The Suggested Questions feature enhances user experience by providing contextually relevant follow-up questions after each assistant response. It follows a hybrid approach combining template-based and LLM-powered question generation.
+
+### Frontend Components
+
+```
+SuggestedQuestions/
+├── SuggestedQuestions.tsx   # Displays question chips in a horizontal scrollable container
+├── hooks/
+│   └── useSuggestions.ts    # Custom hook to fetch and manage suggestions state
+└── services/
+    └── suggestionsService.ts # API service for fetching suggestions
+```
+
+**Key features:**
+- Horizontally scrollable question chips with tooltips
+- Text truncation with fixed-width styling
+- Automatic language matching (Hindi/English)
+- Error handling and graceful degradation
+- Integration with main chat flow
+
+### Backend Components
+
+```
+src/
+├── schemas.py                # Defines SuggestedQuestion and related schemas
+├── main.py                   # Contains /suggested-questions API endpoint
+└── services/
+    └── suggestion_service.py # Implements question generation logic
+```
+
+**Generation strategy:**
+1. **Entity extraction** - Identifies scheme names, amounts, and documents
+2. **Template-based questions** - Uses predefined templates for common patterns
+3. **LLM-generated questions** - Uses Claude to generate contextual questions
+4. **Language detection** - Ensures questions match the conversation language
+5. **Prioritization** - Selects top 4 most relevant questions
+
+### Data Flow
+
+1. User receives a response from the assistant
+2. Frontend requests suggested questions from backend
+3. Backend:
+   - Analyzes conversation context and extracts entities
+   - Generates template-based questions
+   - Uses LLM to generate contextual questions
+   - Selects and returns top 4 most relevant questions
+4. Frontend displays the questions as clickable chips
+5. When a user clicks a question, it's submitted as a new user query
+
+### Testing Strategy
+
+- **Frontend Tests:** Component rendering, function prop handling, error cases
+- **Backend Tests:** Entity extraction, question generation, API contract
+
+### Integration Points
+
+- Integrates with the ChatContainer/ChatMessages components
+- Leverages the existing entity extraction system
+- Uses the Claude LLM through LangChain for question generation
+- Handles both Hindi and English languages

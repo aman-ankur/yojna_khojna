@@ -16,6 +16,8 @@ We have implemented the "Suggested Questions" feature for the Yojna Khojna chatb
 
 5. **ChatInterface.tsx**: Modified to handle sending messages from suggested question clicks.
 
+6. **ChatContainer.tsx**: Updated to properly pass the sendMessage function to child components.
+
 ### Backend Components
 1. **suggestion_service.py**: Main service for generating suggested questions with:
    - Entity extraction from conversation
@@ -32,6 +34,7 @@ We have implemented the "Suggested Questions" feature for the Yojna Khojna chatb
 1. **Frontend Tests**:
    - Unit tests for SuggestedQuestions component
    - Tests for the useSuggestions hook
+   - Tests for ChatMessages component with suggested questions
 
 2. **Backend Tests**:
    - Unit tests for suggestion service functions
@@ -47,10 +50,33 @@ We implemented a hybrid approach as specified in the PRD:
 4. **Language Support**: Detects conversation language and provides questions in the same language
 
 ### UI Implementation
-- Horizontally scrollable chips with appropriate styling
-- Smooth animations for appearance
-- Mobile-responsive design with proper truncation for long questions
-- Consistent visual styling matching the existing UI
+- Horizontally scrollable chips with improved styling
+- Added tooltips to display full question text on hover
+- Proper text truncation for consistent appearance
+- Fixed widths for chips based on screen size
+- Error handling for function props
+- Mobile-responsive design with proper text handling
+- Language matching for questions (Hindi/English)
+
+## Latest Improvements
+1. **Fixed Clickable Functionality**:
+   - Added proper function passing through component hierarchy
+   - Implemented type checking and error handling for functions
+   - Updated ChatContainer to correctly pass onSendMessage prop
+
+2. **Enhanced Text Display in Chips**:
+   - Implemented explicit text truncation function (limit of 30 characters)
+   - Added tooltips for showing full text on hover
+   - Set fixed widths for consistent appearance across devices
+   - Improved styling for better visibility and interaction
+
+3. **Limited to 4 Questions**:
+   - Updated backend to return exactly 4 suggestions
+   - Enhanced prompt to request exactly 4 contextually relevant questions
+
+4. **Language Consistency**:
+   - Improved language detection and matching
+   - Added explicit instructions in prompt to generate questions in the same language
 
 ## Testing Strategy
 - Unit tests for individual components
