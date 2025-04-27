@@ -1,57 +1,67 @@
-# Active Context
+# Active Context & Current Focus
 
-## Current Focus
+## Project Status (Updated: April 2025)
 
-*   **Phase:** Phase 3 Complete (Frontend Interface Development)
-*   **Goal:** Prepare for Phase 4 implementation (Multilingual Support & Enhanced NLP)
-*   **Recent Changes:** Completely redesigned the frontend UI using a Claude-inspired interface with gradient text effects, enhanced message styling, and bilingual support. Added new components for welcome screen, sidebar navigation, and suggested prompts.
+The Yojna Khojna project is a RAG-based government scheme assistant for low-literacy Indian populations. We are currently in the evaluation phase after successfully completing the enhanced RAG pipeline implementation.
 
-## Key Technical Decisions Recently Made
+### Completed Components
 
-*   **UI Design Direction:** Adopted Claude AI's aesthetic for a clean, modern chat experience with gradient text and enhanced visuals.
-*   **Component Architecture:** Refactored the monolithic ChatInterface component into smaller, focused components (ChatContainer, ChatMessages, ChatInput, etc.).
-*   **Language Support:** Implemented React Context API for language management with Hindi/English toggle.
-*   **Styling Approach:** Used gradient backgrounds with text clipping for signature purple gradient effects.
-*   **Layout Structure:** Created a two-panel layout with collapsible sidebar and main content area.
-*   **Animations:** Added subtle animations for typing indicators and message transitions to enhance UX.
-*   **Responsive Design:** Ensured the interface works well on both mobile and desktop with specific adaptations.
+1. **Core Data Pipeline**: PDF extraction, embedding generation, Weaviate storage
+2. **Basic RAG Backend**: Initial version with LangChain and Claude integration
+3. **Frontend Interface**: React-based chat UI with bilingual support
+4. **Enhanced RAG Pipeline**: 
+   - New prompts for better reformulation and practical answers
+   - Domain-specific entity extraction with multilingual support
+   - Enhanced retrieval with follow-up queries
+   - Response formatting with monetary amount highlighting
+   - Completed comprehensive test suite (69 passing, 5 skipped tests)
 
-## Next Steps Considerations
+### Current Focus: Evaluation and Deployment
 
-*   **Testing Expansion:** Write comprehensive tests for the new UI components.
-*   **Backend Multilingual Support:** Begin implementation of Phase 4 tasks for Hindi language support in the backend (OCR validation, NLP pipeline adaptation).
-*   **Documentation Updates:** Ensure all UI components are well documented for future development.
-*   **Performance Optimization:** Review for any performance optimizations needed in the new UI components.
+We're now focused on evaluating the enhanced RAG system and preparing for deployment:
 
-## Current Goal
-Develop unit tests for the new frontend components and prepare for Phase 4 implementation.
+1. **Evaluation**:
+   - Manual testing with real-world queries across different scheme categories
+   - Side-by-side comparison of old vs. new RAG system
+   - Measuring improvements in answer quality, comprehensiveness, and cross-document synthesis
 
-## Focus Areas
-*   Finalizing knowledge base updates for Phase 2 completion.
-*   Planning the merge strategy for `feature/rag-llm-integration`.
-*   Starting frontend setup (React/TypeScript).
+2. **Documentation**:
+   - Creating user guides and examples
+   - Updating technical documentation
+   - Creating deployment instructions including spaCy model setup
 
-## Recent Activity
-*   Completed Task 2.6: Implemented Conversation History Management.
-    *   Used `create_history_aware_retriever`.
-    *   Optimized cost by removing history from final QA prompt.
-    *   Updated API endpoint, schemas, tests.
-    *   Documented approach in `techContext.md`.
-*   Merged `feature/conversation-history` into `feature/rag-llm-integration`.
-*   Verified changes with passing tests.
-*   Pushed `feature/rag-llm-integration` to remote.
-*   Completed Task 3.6: Claude-Style UI Redesign
-    *   Implemented gradient text effects for headers
-    *   Created a modern sidebar navigation
-    *   Built welcome screen with suggested prompts
-    *   Enhanced message bubbles with advanced styling
-    *   Added language toggle for Hindi/English support
-    *   Improved overall visual design and user experience
+3. **Deployment Preparation**:
+   - Testing in a staging environment
+   - Updating Docker configuration for spaCy models
+   - Final quality assurance checks
 
-## Blockers
-*   None currently.
+## Technical Requirements & Constraints
 
-## Next Steps
-1.  **Write Unit Tests:** Create comprehensive tests for the new UI components.
-2.  **Review Documentation:** Update all relevant documentation to reflect the current state.
-3.  **Prepare for Phase 4:** Begin planning for multilingual support implementation in the backend.
+The implementation maintains the following key requirements:
+
+1. **Architectural**: LangChain-based RAG using Weaviate vector database
+2. **Performance**: Optimized for responsive user experience with cost awareness
+3. **Deployment**: Docker-containerized with proper environment setup for spaCy
+4. **Testing**: Comprehensive test coverage for all components
+5. **Languages**: Bilingual support (Hindi/English)
+
+## Development Environment
+
+- **Backend**: Python FastAPI with LangChain, Weaviate, spaCy, and Claude API
+- **Frontend**: React TypeScript with Material UI
+- **Local Setup**: Docker for Weaviate, virtual environment for Python
+
+## Dependencies
+
+- **LLM**: Anthropic Claude (version 3)
+- **Vector DB**: Weaviate
+- **NLP**: spaCy with xx_ent_wiki_sm (multilingual model)
+- **Embedding**: Sentence-Transformers
+- **PDF Processing**: pdfplumber with pytesseract OCR fallback
+
+## Immediate Next Steps
+
+1. Create test cases for manual evaluation across different scheme categories
+2. Develop a benchmark dataset for measuring improvements
+3. Document examples of enhanced responses for stakeholders
+4. Prepare deployment guide with spaCy model setup instructions

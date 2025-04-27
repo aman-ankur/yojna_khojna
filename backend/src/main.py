@@ -10,6 +10,7 @@ import weaviate
 import weaviate.classes as wvc # Import Weaviate classes for filtering
 from weaviate.exceptions import WeaviateQueryError, WeaviateConnectionError as WeaviateV4ConnectionError # Import necessary exceptions
 import sys # Import sys for exit
+import re # Import regex module
 
 # Import pipeline components and exceptions
 from .main_pipeline import process_pdf
@@ -265,11 +266,56 @@ from typing import List, Tuple
 # For now, keeping initialization per-request for safety, can optimize later.
 # conversational_rag_chain = create_conversational_rag_chain()
 
+def format_response(llm_response: str, language: str = "hi") -> str:
+    """
+    Formats the LLM response to highlight entitlement amounts.
+    
+    Args:
+        llm_response: The raw response from the LLM
+        language: The language code ('hi' for Hindi, 'en' for English, defaults to Hindi)
+        
+    Returns:
+        Formatted response with highlighted monetary values
+    """
+    # Extract entitlement amounts with regex (supporting commas)
+    # Looks for ₹ symbol or Rs/Rs. followed by optional space, digits/commas
+    amounts = re.findall(r'(₹|Rs\.?|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:lakh|lakhs|हज़ार|crore))?', llm_response)
+    
+    if not amounts:
+        return llm_response
+        
+    # Get the first amount match
+    amount_match = re.search(r'(₹|Rs\.?|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:lakh|lakhs|हज़ार|crore))?', llm_response)
+    if not amount_match:
+        return llm_response
+        
+    first_amount = amount_match.group(0)
+    
+    # Check if the first sentence already contains the amount
+    # Split by potential sentence terminators (. ! ? ।)
+    first_sentence = re.split(r'[.!?।]', llm_response, 1)[0]
+    
+    # Highlight all monetary amounts with bold HTML tags
+    highlighted_response = llm_response
+    for amount_pattern in re.finditer(r'(₹|Rs\.?|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:lakh|lakhs|हज़ार|crore))?', llm_response):
+        amount = amount_pattern.group(0)
+        highlighted_response = highlighted_response.replace(amount, f"<strong>{amount}</strong>")
+    
+    # If the first amount is not in the first sentence, prepend it
+    if first_amount not in first_sentence:
+        if language.lower() == "hi":
+            return f"आपको <strong>{first_amount}</strong> की राशि मिल सकती है। {highlighted_response}"
+        else:
+            return f"You may be eligible for <strong>{first_amount}</strong>. {highlighted_response}"
+    
+    return highlighted_response
+
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"])
 async def chat_endpoint(query: ChatQuery):
     """
     Receives a user query and conversation history.
     Processes it through the conversational RAG chain.
+    Formats the response to highlight key info.
     Returns the generated answer and the updated history.
     """
     logger.info(f"Received chat query: '{query.question}', History length: {len(query.chat_history)}")
@@ -281,7 +327,14 @@ async def chat_endpoint(query: ChatQuery):
         formatted_history.append(HumanMessage(content=human_msg))
         formatted_history.append(AIMessage(content=ai_msg))
 
+    # Detect language - simple heuristic
+    # Better to use a proper language detection library in production
+    language = "en"  # Default
+    if any(char in query.question for char in "अआइईउऊएऐओऔकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसह"):
+        language = "hi"
+    
     logger.debug(f"Formatted history: {formatted_history}")
+    logger.debug(f"Detected language: {language}")
 
     try:
         # Initialize the CONVERSATIONAL RAG chain
@@ -296,24 +349,38 @@ async def chat_endpoint(query: ChatQuery):
             "chat_history": formatted_history
         })
 
-        # The response should be a dictionary with 'answer' and 'chat_history' keys
+        # --- Extract Answer --- 
+        # Handle potential variations in chain output structure
         if isinstance(response, dict) and 'answer' in response:
-            answer = response['answer']
+            raw_answer = response['answer']
+        elif isinstance(response, str):
+             raw_answer = response
         else:
-            # Fall back to using the response directly if it's not a dict with expected keys
-            answer = response
+            logger.error(f"Unexpected RAG chain response type: {type(response)}. Response: {response}")
+            raw_answer = "" # Default to empty if format is unknown
             
-        logger.info(f"Conversational RAG chain generated answer.")
+        logger.info(f"Conversational RAG chain generated answer (raw): {raw_answer[:100]}...")
 
-        if not answer:
+        if not raw_answer:
             logger.warning("Conversational RAG chain returned an empty answer.")
             # Maintain the original history if no answer is generated
-            return ChatResponse(answer="Sorry, I couldn't generate an answer for that question.", updated_history=query.chat_history)
+            # Use a more informative message, respect detected language
+            if language == "hi":
+                formatted_answer = "माफ़ कीजिए, मुझे इस सवाल का जवाब नहीं मिल पाया।" # Sorry, I couldn't find an answer to this question.
+            else:
+                formatted_answer = "I'm sorry, I couldn't find an answer to this question."
+            updated_history = query.chat_history # Keep original history
+            return ChatResponse(answer=formatted_answer, updated_history=updated_history)
 
-        # Update the history with the new exchange for the response
-        updated_history = query.chat_history + [(query.question, answer)]
+        # --- Format the Response with detected language --- 
+        formatted_answer = format_response(raw_answer, language)
+        logger.info(f"Formatted answer: {formatted_answer[:100]}...")
+        # -------------------------
 
-        return ChatResponse(answer=answer, updated_history=updated_history)
+        # Update the history with the new exchange using the *formatted* answer
+        updated_history = query.chat_history + [(query.question, formatted_answer)]
+
+        return ChatResponse(answer=formatted_answer, updated_history=updated_history)
 
     # Keep existing specific error handling
     except (WeaviateConnectionError, WeaviateSchemaError, EmbeddingModelError) as e:
