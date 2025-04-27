@@ -3,17 +3,27 @@ uvicorn[standard]
 pdfplumber
 pytesseract
 Pillow
-weaviate-client
-langchain
-langchain-community
-langchain-openai
+weaviate-client>=4.6.0,<5.0.0
+langchain>=0.1.0,<0.2.0
+# For LangChain integration with Weaviate v4
+langchain-weaviate==0.0.4
+# Embedding model (ensure this matches phase 1 index)
 sentence-transformers
+# LLM Provider
+langchain_anthropic
 python-dotenv
 python-multipart
-langchain-anthropic
-langchain-weaviate
 
 # Testing
 pytest
 pytest-mock
 pytest-asyncio # For testing async FastAPI code 
+httpx # For FastAPI TestClient
+
+# PDF Processing
+PyMuPDF
+
+# NER for Entity Extraction
+spacy>=3.0.0,<4.0.0
+# Add a comment to remind users to install the model
+# Run: python -m spacy download xx_ent_wiki_sm 

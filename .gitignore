@@ -19,6 +19,12 @@ instance/
 .coverage
 htmlcov/
 
+# Virtual Environment
+# Specific Yojna Khojna virtual environments
+backend/yojna/
+backend/yojna_2/
+*venv*/
+
 # Node.js
 node_modules/
 npm-debug.log*
@@ -39,3 +45,20 @@ dist/
 .idea/
 *.swp
 *.swo
+
+# Project specific
+.weaviate/
+# Exclude spaCy models (they should be downloaded by the user)
+**/en_core_web_sm/
+**/xx_ent_wiki_sm/
+**/hi_core_web_sm/
+
+# Test files that shouldn't be tracked
+**/test_*.pdf
+temp_test_files/
+
+# Temporary and output files
+*.tmp
+*.temp
+output/
+logs/
