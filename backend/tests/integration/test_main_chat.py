@@ -107,12 +107,15 @@ def test_chat_endpoint_empty_answer_with_history(mock_create_chain, client):
     # Assert
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["answer"] == "Sorry, I couldn't generate an answer for that question."
-    # IMPORTANT: History should NOT be updated if no answer was generated
-    expected_initial_history_json = [[h[0], h[1]] for h in initial_history]
-    assert response_json["updated_history"] == expected_initial_history_json
+    
+    # Check that the right language fallback message is used based on detected language
+    # Since our test question is in English, expect the English fallback message
+    assert response_json["answer"] == "I'm sorry, I couldn't find an answer to this question."
+    
+    # Compare history against the expected JSON format (list of lists)
+    assert response_json["updated_history"] == [list(item) for item in initial_history]
     mock_create_chain.assert_called_once()
-    mock_chain.ainvoke.assert_called_once_with(expected_input_to_chain)
+    mock_chain.ainvoke.assert_awaited_once_with(expected_input_to_chain)
 
 # Patch the NEW chain creation function for error tests
 @patch('backend.src.main.create_conversational_rag_chain')

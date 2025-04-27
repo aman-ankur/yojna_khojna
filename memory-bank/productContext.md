@@ -14,9 +14,28 @@ This information gap prevents many eligible citizens from benefiting from crucia
 ## Target Users
 
 *   Citizens across India, particularly those in rural and semi-urban areas.
-*   Individuals with varying levels of literacy and digital access.
-*   Users seeking information on specific needs (housing, education, agriculture, etc.).
-*   Speakers of Hindi and English.
+*   Varied education levels from limited literacy to secondary education.
+*   Limited familiarity with bureaucratic processes and government terminology.
+*   Multiple economic backgrounds with focus on economically disadvantaged.
+*   Primarily regional language users with varying comfort in official terminology.
+*   Various life situations including:
+    - Disaster victims seeking relief
+    - Farmers looking for agricultural support programs
+    - Job seekers needing employment scheme information
+    - Students seeking educational scholarships
+    - Women looking for gender-specific welfare schemes
+    - Elderly individuals seeking pension benefits
+    - Differently-abled persons needing disability assistance
+    - Healthcare seekers requiring medical support programs
+
+## User Needs:
+
+*   Information on eligibility for various welfare schemes
+*   Application process guidance for benefits and subsidies
+*   Clarification on entitlements across multiple domains
+*   Document requirements for different government programs
+*   Verification of benefits they've heard about through word-of-mouth
+*   Assistance navigating complex government systems
 
 ## How It Should Work (User Experience Goals)
 
