@@ -259,6 +259,10 @@ from .rag.chain import create_conversational_rag_chain
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 from typing import List, Tuple
 
+# Import suggested questions schemas and service
+from .schemas import SuggestedQuestionsRequest, SuggestedQuestionsResponse, SuggestedQuestion
+from .services.suggestion_service import generate_suggestions
+
 # Potentially initialize the chain once on startup for efficiency
 # If the chain itself is stateless (which LangChain chains usually are),
 # this avoids re-initialization overhead on every request.
@@ -392,6 +396,41 @@ async def chat_endpoint(query: ChatQuery):
         logger.critical(f"Unexpected error processing chat query '{query.question}': {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error while processing the chat query.")
 
+@app.post("/suggested-questions", response_model=SuggestedQuestionsResponse, tags=["Chat"])
+async def suggested_questions_endpoint(request: SuggestedQuestionsRequest):
+    """
+    Generates suggested follow-up questions based on the conversation context.
+    Takes the current question, answer, and chat history.
+    Returns a list of suggested questions.
+    """
+    logger.info(f"Received suggested questions request for question: '{request.question[:50]}...'")
+    
+    try:
+        # Validate input - ensure we have at least a question or an answer
+        if not request.question and not request.answer:
+            logger.warning("Both question and answer are empty, returning empty suggestions")
+            return SuggestedQuestionsResponse(suggestions=[])
+            
+        # Convert frontend message format to the format expected by the suggestion service
+        formatted_history = [
+            {"role": msg["role"], "content": msg["content"]} 
+            for msg in request.chat_history
+        ]
+        
+        # Generate suggestions
+        suggestions = await generate_suggestions(
+            question=request.question,
+            answer=request.answer,
+            chat_history=formatted_history
+        )
+        
+        logger.info(f"Generated {len(suggestions)} suggested questions")
+        return SuggestedQuestionsResponse(suggestions=suggestions)
+        
+    except Exception as e:
+        logger.error(f"Error generating suggested questions: {e}", exc_info=True)
+        # Return empty suggestions on error for graceful degradation
+        return SuggestedQuestionsResponse(suggestions=[])
 
 # Add more endpoints later 
 

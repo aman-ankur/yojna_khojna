@@ -48,6 +48,21 @@ class ChatResponse(BaseModel):
     )
     # Optional: Add fields for retrieved context, confidence scores, etc.
 
+# New schemas for suggested questions
+class SuggestedQuestion(BaseModel):
+    id: str
+    text: str
+
+class SuggestedQuestionsRequest(BaseModel):
+    question: str
+    answer: str
+    chat_history: List[dict] = Field(default_factory=list)  # List of message objects
+    conversationId: Optional[str] = None
+    lastResponseId: Optional[str] = None
+
+class SuggestedQuestionsResponse(BaseModel):
+    suggestions: List[SuggestedQuestion]
+
 # You can add other data models (schemas) needed by your application here
 # For example:
 # class ProcessedDocument(BaseModel):
