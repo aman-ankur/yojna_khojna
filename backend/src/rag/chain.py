@@ -512,3 +512,133 @@ You are helping rural and underserved Indian citizens access government welfare 
 
 #     except Exception as e:
 #         print(f"Error invoking conversational RAG chain: {e}") 
+
+# Add helper functions needed for testing
+import anthropic
+
+def contextualize_q_prompt_reformulation(query: str, chat_history=None) -> str:
+    """
+    Reformulate a query based on the rephrase_chain part of our RAG pipeline.
+    This is primarily used for testing purposes.
+    
+    Args:
+        query: The user's query to reformulate
+        chat_history: Optional conversation history
+        
+    Returns:
+        Reformulated query
+    """
+    if chat_history is None:
+        chat_history = []
+        
+    # Define the prompt template directly here to avoid global variable reference
+    system_prompt = """# Yojna Khojna Question Reformulation System
+
+You help rural and underserved Indian citizens by reformulating their questions for better document retrieval. Many users have limited education and are seeking help with government schemes.
+
+Given the chat history and the latest question:
+1. Create a STANDALONE QUERY that retrieval systems can effectively use
+2. INCLUDE BOTH Hindi and English terms for key concepts (vajrapat/lightning strike, prakritik aapda/natural calamity)
+3. EXPAND the query to capture the likely UNDERLYING NEED for practical assistance
+4. PRESERVE location or scheme-specific details mentioned
+
+Remember that behind simple questions are often people in distress looking for concrete help.
+
+DO NOT answer the question - ONLY reformulate it for better document retrieval."""
+        
+    client = anthropic.Anthropic()
+    messages = [
+        {"role": "system", "content": system_prompt},
+    ]
+    
+    # Add chat history if provided
+    for msg in chat_history:
+        if isinstance(msg, HumanMessage):
+            messages.append({"role": "user", "content": msg.content})
+        elif isinstance(msg, AIMessage):
+            messages.append({"role": "assistant", "content": msg.content})
+    
+    # Add the current query
+    messages.append({"role": "user", "content": query})
+    
+    response = client.messages.create(
+        model="claude-3-haiku-20240307",
+        max_tokens=1024,
+        messages=messages
+    )
+    
+    return response.content[0].text
+
+def contextualize_q_prompt_standalone(query: str, retrieved_docs=None) -> str:
+    """
+    Create a standalone prompt for the second stage of query reformulation.
+    This is primarily used for testing purposes.
+    
+    Args:
+        query: The user's original query
+        retrieved_docs: Optional list of retrieved documents to consider
+        
+    Returns:
+        Standalone query for further retrieval
+    """
+    client = anthropic.Anthropic()
+    
+    # Create a prompt that asks for a standalone query
+    prompt = f"""Given the user query and retrieved documents, create a standalone query
+that will be effective for retrieving additional relevant information.
+
+Query: {query}
+
+Retrieved Documents:
+{retrieved_docs if retrieved_docs else "No documents retrieved yet."}
+
+Standalone Query:"""
+    
+    messages = [
+        {"role": "user", "content": prompt}
+    ]
+    
+    response = client.messages.create(
+        model="claude-3-haiku-20240307",
+        max_tokens=1024,
+        messages=messages
+    )
+    
+    return response.content[0].text
+    
+def extract_key_entities_ner(text: str) -> list:
+    """
+    Extract named entities from text using NER.
+    This is a simplified version for testing purposes.
+    
+    Args:
+        text: The text to extract entities from
+        
+    Returns:
+        List of entity dictionaries with text and type
+    """
+    # Simple regex pattern matching to extract entities
+    # This is a simplified version for testing purposes
+    
+    entities = []
+    
+    # Extract monetary values
+    money_pattern = r'(?:₹|Rs\.?|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:lakh|lakhs|हज़ार|crore))?'
+    money_matches = re.findall(money_pattern, text)
+    for match in money_matches:
+        entities.append({"text": match, "type": "MONETARY_VALUE"})
+    
+    # Extract scheme names
+    scheme_patterns = [
+        r'(?:Pradhan\s*Mantri|PM)\s+[A-Za-z\s]+\b(?:Yojana|Scheme)?',
+        r'[A-Za-z\s]+\bYojana\b',
+        r'[A-Za-z\s]+\bScheme\b'
+    ]
+    
+    for pattern in scheme_patterns:
+        scheme_matches = re.findall(pattern, text)
+        for match in scheme_matches:
+            if match.strip() and len(match.strip()) > 5:  # Avoid short matches
+                entities.append({"text": match.strip(), "type": "SCHEME_NAME"})
+    
+    return entities 

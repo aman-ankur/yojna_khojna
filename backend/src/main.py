@@ -266,30 +266,49 @@ from typing import List, Tuple
 # For now, keeping initialization per-request for safety, can optimize later.
 # conversational_rag_chain = create_conversational_rag_chain()
 
-def format_response(llm_response: str) -> str:
-    """Formats the LLM response to highlight entitlement amounts (Hindi focus)."""
-    # Extract entitlement amounts with regex (supporting commas)
-    # Looks for ₹ symbol, optional space, digits/commas
-    amounts = re.findall(r'₹\s*[\d,]+(?:\.\d+)?', llm_response)
+def format_response(llm_response: str, language: str = "hi") -> str:
+    """
+    Formats the LLM response to highlight entitlement amounts.
     
-    if amounts:
-        first_amount = amounts[0]
-        # Check if the first sentence already contains the amount
-        # Split by potential sentence terminators (. ! ? ।)
-        first_sentence = re.split(r'[.!?।]', llm_response, 1)[0]
+    Args:
+        llm_response: The raw response from the LLM
+        language: The language code ('hi' for Hindi, 'en' for English, defaults to Hindi)
         
-        if first_amount not in first_sentence:
-            # Restructure to highlight entitlement amount (Hindi phrasing)
-            print(f"Response Formatting: Moving amount {first_amount} to the beginning.")
-            # Remove the amount from its original position to avoid repetition (optional, can be complex)
-            # llm_response_without_amount = llm_response.replace(first_amount, "", 1) 
-            # return f"आपको {first_amount} की राशि मिल सकती है। " + llm_response_without_amount
-            # Simpler approach: just prepend
-            return f"आपको {first_amount} की राशि मिल सकती है। {llm_response}"
+    Returns:
+        Formatted response with highlighted monetary values
+    """
+    # Extract entitlement amounts with regex (supporting commas)
+    # Looks for ₹ symbol or Rs/Rs. followed by optional space, digits/commas
+    amounts = re.findall(r'(₹|Rs\.?|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:lakh|lakhs|हज़ार|crore))?', llm_response)
+    
+    if not amounts:
+        return llm_response
+        
+    # Get the first amount match
+    amount_match = re.search(r'(₹|Rs\.?|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:lakh|lakhs|हज़ार|crore))?', llm_response)
+    if not amount_match:
+        return llm_response
+        
+    first_amount = amount_match.group(0)
+    
+    # Check if the first sentence already contains the amount
+    # Split by potential sentence terminators (. ! ? ।)
+    first_sentence = re.split(r'[.!?।]', llm_response, 1)[0]
+    
+    # Highlight all monetary amounts with bold HTML tags
+    highlighted_response = llm_response
+    for amount_pattern in re.finditer(r'(₹|Rs\.?|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:lakh|lakhs|हज़ार|crore))?', llm_response):
+        amount = amount_pattern.group(0)
+        highlighted_response = highlighted_response.replace(amount, f"<strong>{amount}</strong>")
+    
+    # If the first amount is not in the first sentence, prepend it
+    if first_amount not in first_sentence:
+        if language.lower() == "hi":
+            return f"आपको <strong>{first_amount}</strong> की राशि मिल सकती है। {highlighted_response}"
         else:
-            print(f"Response Formatting: Amount {first_amount} already in first sentence.")
-            
-    return llm_response
+            return f"You may be eligible for <strong>{first_amount}</strong>. {highlighted_response}"
+    
+    return highlighted_response
 
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"])
 async def chat_endpoint(query: ChatQuery):
@@ -308,7 +327,14 @@ async def chat_endpoint(query: ChatQuery):
         formatted_history.append(HumanMessage(content=human_msg))
         formatted_history.append(AIMessage(content=ai_msg))
 
+    # Detect language - simple heuristic
+    # Better to use a proper language detection library in production
+    language = "en"  # Default
+    if any(char in query.question for char in "अआइईउऊएऐओऔकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसह"):
+        language = "hi"
+    
     logger.debug(f"Formatted history: {formatted_history}")
+    logger.debug(f"Detected language: {language}")
 
     try:
         # Initialize the CONVERSATIONAL RAG chain
@@ -338,13 +364,16 @@ async def chat_endpoint(query: ChatQuery):
         if not raw_answer:
             logger.warning("Conversational RAG chain returned an empty answer.")
             # Maintain the original history if no answer is generated
-            # Use a more informative message
-            formatted_answer = "माफ़ कीजिए, मुझे इस सवाल का जवाब नहीं मिल पाया।" # Sorry, I couldn't find an answer to this question.
+            # Use a more informative message, respect detected language
+            if language == "hi":
+                formatted_answer = "माफ़ कीजिए, मुझे इस सवाल का जवाब नहीं मिल पाया।" # Sorry, I couldn't find an answer to this question.
+            else:
+                formatted_answer = "I'm sorry, I couldn't find an answer to this question."
             updated_history = query.chat_history # Keep original history
             return ChatResponse(answer=formatted_answer, updated_history=updated_history)
 
-        # --- Format the Response --- 
-        formatted_answer = format_response(raw_answer)
+        # --- Format the Response with detected language --- 
+        formatted_answer = format_response(raw_answer, language)
         logger.info(f"Formatted answer: {formatted_answer[:100]}...")
         # -------------------------
 

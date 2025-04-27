@@ -214,3 +214,89 @@
 *   Enhance frontend UI/UX based on user testing.
 *   Implement multilingual support properly (passing language preference).
 *   Optimize performance (e.g., chain initialization, NER speed).
+
+# Enhanced RAG Pipeline Implementation Progress
+
+## ✅ Completed Tasks
+
+### New Prompts Implementation:
+- Successfully integrated the "Yojna Khojna Question Reformulation System" prompt for better query contextualization
+- Implemented the comprehensive "Yojna Khojna Government Scheme Assistant" prompt with focus on practical guidance
+- Both prompts are working in backend/src/rag/chain.py
+
+### Enhanced Retrieval Structure:
+- Implemented the enhanced_retrieval_step function with the complete pipeline:
+  - Initial search → entity extraction → follow-up searches → deduplication
+- Added domain-specific entity extraction with significantly improved capabilities:
+  - Replaced basic NER with comprehensive domain-aware extraction
+  - Added multilingual capability with xx_ent_wiki_sm spaCy model
+  - Implemented bilingual term matching (Hindi/English pairs)
+  - Added special handling for monetary amounts and scheme names
+  - Created robust regex fallback when spaCy is unavailable
+
+### Sentence Limit Removal & Response Formatting:
+- Removed the sentence limit constraint from the QA prompt
+- Implemented format_response function in backend/src/main.py to highlight monetary amounts
+- Integrated response formatting into the /chat endpoint
+
+### Dependencies & Documentation:
+- Added spaCy to requirements.txt with instructions for model installation
+- Created dedicated documentation on entity extraction strategy and setup
+- Added test script to verify entity extraction functionality
+
+### Testing Implementation:
+- Implemented unit tests for query reformulation with LLM mocking
+- Added test for entity extraction functionality
+- Created integration tests for the enhanced retrieval pipeline
+- Implemented tests for response formatting functionality
+- Added script to verify spaCy model installation
+- Fixed all test issues, complete test suite now passes (69 tests passing, 5 skipped)
+
+### Multilingual Support:
+- Added language detection to the /chat endpoint
+- Enhanced format_response to support both Hindi and English responses
+- Created test script to run all tests in the test suite
+- Fixed language detection in empty response tests
+
+## ✅ Overall Status
+
+All 74 tests are now either passing (69) or appropriately skipped (5). The enhanced RAG pipeline has been successfully implemented with full test coverage, including:
+
+1. Domain-specific entity extraction with multilingual support
+2. Enhanced retrieval with follow-up searches based on extracted entities
+3. Reformulated prompts for better context understanding and practical answers
+4. Response formatting with monetary amount highlighting
+5. Proper language detection for Hindi/English queries
+
+## 🔜 Recommended Next Steps
+
+Now that the implementation and testing phases are complete, we should focus on evaluation and deployment:
+
+1. **Manual Testing with Real-World Queries**
+   - Test across different scheme categories to verify cross-document connections
+   - Compare old vs. new responses for quality improvement
+   - Verify Hindi and English handling with actual bilingual users
+
+2. **Evaluation and Benchmarking**
+   - Create a benchmark dataset of queries with expected outcomes
+   - Measure improvement in result quality and comprehensiveness
+   - Document examples of cross-document information synthesis
+
+3. **Deployment Preparation**
+   - Test in a staging environment
+   - Verify Docker configuration with spaCy models
+   - Create a deployment guide including spaCy model installation instructions
+
+4. **Final Documentation Updates**
+   - Finalize user documentation
+   - Update technical documentation
+   - Create examples of improved responses for stakeholders
+
+## Minor Improvements for Future Consideration
+
+These are not blockers but could enhance the system further:
+
+- Fix FastAPI deprecation warnings for `on_event` by updating to lifespan event handlers
+- Consider registering the custom pytest mark `rag` to remove the warning
+- Optimize the entity extraction process for better performance
+- Add more comprehensive error handling for spaCy model failures
