@@ -19,6 +19,7 @@ This document outlines the specific technologies and tools proposed for the Proo
     *   Fallback: Cloud Vision APIs (e.g., Google Cloud Vision)
 *   **Rules Engine:** Simple Python implementation (for initial scheme matching logic)
 *   **Chunking:** `langchain` library (`RecursiveCharacterTextSplitter`) for splitting extracted text into manageable chunks.
+*   **Other:** `python-dotenv` (config), `PyMuPDF` (PDF text extraction), `spacy` (NER for enhanced retrieval)
 
 ## Data Storage
 
@@ -82,3 +83,68 @@ This document outlines the specific technologies and tools proposed for the Proo
     *   **Windowed History:** Pass only the last `k` turns to the final QA prompt (simpler, but may lose context).
     *   **Summarization Memory:** Use an LLM to summarize older history (preserves more context, but adds complexity and summarization cost).
     *   **Full History (Original POC approach):** Pass the entire history to the final QA prompt (most conversational context, highest potential cost).
+
+### Enhanced Entity Extraction System
+
+*   **Problem Addressed:** Standard Named Entity Recognition (NER) doesn't adequately capture domain-specific government scheme terminology, especially in a bilingual (Hindi/English) context.
+
+*   **Implementation:**
+    *   **Multilingual NER Model:** Replaced the English-only `en_core_web_sm` with `xx_ent_wiki_sm` for better Hindi support.
+    *   **Domain Dictionary:** Created a comprehensive dictionary with 12 categories covering all aspects of government schemes:
+        * Social welfare (housing schemes)
+        * Healthcare benefits
+        * Education support
+        * Employment programs
+        * Agricultural assistance
+        * Utilities and subsidies
+        * Disaster relief
+        * Special category benefits (widows, disabled, etc.)
+        * Financial assistance terms
+        * Document requirements
+        * Authorities and offices
+        * Procedural terms
+    *   **Multi-Strategy Extraction:**
+        * Standard NER for recognizing general entities (ORG, PERSON, GPE, LOC)
+        * Regular expression pattern matching for scheme names, monetary amounts
+        * Dictionary lookup for domain-specific terminology
+        * Bilingual term matching that pairs Hindi/English equivalents
+    *   **Entity Prioritization:** Scoring algorithm to rank extracted entities based on:
+        * Presence in original query (highest priority)
+        * Entity type (schemes and monetary amounts get higher priority)
+        * Relevance to eligibility, application process, documents
+    *   **Graceful Degradation:** Robust fallback to regex-based extraction when spaCy is unavailable
+    *   **Contextual Follow-Up Queries:** Context-aware query generation based on entity type:
+        * Scheme-specific queries focus on eligibility and benefits
+        * Financial queries focus on amounts and processes
+        * Beneficiary queries focus on available schemes
+        * Document queries focus on requirements and procedures
+
+*   **File Structure:**
+    *   **Main Implementation:** `backend/src/rag/chain.py`
+        * `extract_key_entities`: The core extraction function
+        * `prioritize_entities`: Entity ranking algorithm
+        * `regex_entity_extraction`: Fallback mechanism
+        * `generate_contextual_follow_up_query`: Query generation based on entity type
+    *   **Testing:** `backend/tests/rag/test_chain.py` and `backend/src/rag/test_entity_extraction.py`
+    *   **Documentation:** `entity_extraction_strategy.md` and `entity_extraction_setup.md`
+
+*   **Integration:** The entity extraction is integrated into the enhanced retrieval pipeline:
+    1. Initial search using the reformulated query
+    2. Entity extraction from query and initial results
+    3. Contextual follow-up searches for each extracted entity
+    4. Result combination and deduplication
+    5. Response generation with the comprehensive QA prompt
+
+*   **Performance Considerations:**
+    *   Text truncation to first 500 characters per document to improve processing speed
+    *   Limited to top 5 most relevant entities to reduce follow-up searches
+    *   Caching for spaCy model loading to avoid redundant initialization
+
+*   **Deployment Requirements:**
+    *   Additional dependency: `spacy>=3.0.0,<4.0.0`
+    *   Additional model installation: `python -m spacy download xx_ent_wiki_sm`
+    *   Updated Docker configuration with model installation step
+
+## Testing
+*   **Framework:** `pytest`
+*   **Utilities:** `pytest-asyncio`, `pytest-mock`, `httpx` (for TestClient)

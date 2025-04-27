@@ -10,6 +10,7 @@ import weaviate
 import weaviate.classes as wvc # Import Weaviate classes for filtering
 from weaviate.exceptions import WeaviateQueryError, WeaviateConnectionError as WeaviateV4ConnectionError # Import necessary exceptions
 import sys # Import sys for exit
+import re # Import regex module
 
 # Import pipeline components and exceptions
 from .main_pipeline import process_pdf
@@ -265,11 +266,37 @@ from typing import List, Tuple
 # For now, keeping initialization per-request for safety, can optimize later.
 # conversational_rag_chain = create_conversational_rag_chain()
 
+def format_response(llm_response: str) -> str:
+    """Formats the LLM response to highlight entitlement amounts (Hindi focus)."""
+    # Extract entitlement amounts with regex (supporting commas)
+    # Looks for ₹ symbol, optional space, digits/commas
+    amounts = re.findall(r'₹\s*[\d,]+(?:\.\d+)?', llm_response)
+    
+    if amounts:
+        first_amount = amounts[0]
+        # Check if the first sentence already contains the amount
+        # Split by potential sentence terminators (. ! ? ।)
+        first_sentence = re.split(r'[.!?।]', llm_response, 1)[0]
+        
+        if first_amount not in first_sentence:
+            # Restructure to highlight entitlement amount (Hindi phrasing)
+            print(f"Response Formatting: Moving amount {first_amount} to the beginning.")
+            # Remove the amount from its original position to avoid repetition (optional, can be complex)
+            # llm_response_without_amount = llm_response.replace(first_amount, "", 1) 
+            # return f"आपको {first_amount} की राशि मिल सकती है। " + llm_response_without_amount
+            # Simpler approach: just prepend
+            return f"आपको {first_amount} की राशि मिल सकती है। {llm_response}"
+        else:
+            print(f"Response Formatting: Amount {first_amount} already in first sentence.")
+            
+    return llm_response
+
 @app.post("/chat", response_model=ChatResponse, tags=["Chat"])
 async def chat_endpoint(query: ChatQuery):
     """
     Receives a user query and conversation history.
     Processes it through the conversational RAG chain.
+    Formats the response to highlight key info.
     Returns the generated answer and the updated history.
     """
     logger.info(f"Received chat query: '{query.question}', History length: {len(query.chat_history)}")
@@ -296,24 +323,35 @@ async def chat_endpoint(query: ChatQuery):
             "chat_history": formatted_history
         })
 
-        # The response should be a dictionary with 'answer' and 'chat_history' keys
+        # --- Extract Answer --- 
+        # Handle potential variations in chain output structure
         if isinstance(response, dict) and 'answer' in response:
-            answer = response['answer']
+            raw_answer = response['answer']
+        elif isinstance(response, str):
+             raw_answer = response
         else:
-            # Fall back to using the response directly if it's not a dict with expected keys
-            answer = response
+            logger.error(f"Unexpected RAG chain response type: {type(response)}. Response: {response}")
+            raw_answer = "" # Default to empty if format is unknown
             
-        logger.info(f"Conversational RAG chain generated answer.")
+        logger.info(f"Conversational RAG chain generated answer (raw): {raw_answer[:100]}...")
 
-        if not answer:
+        if not raw_answer:
             logger.warning("Conversational RAG chain returned an empty answer.")
             # Maintain the original history if no answer is generated
-            return ChatResponse(answer="Sorry, I couldn't generate an answer for that question.", updated_history=query.chat_history)
+            # Use a more informative message
+            formatted_answer = "माफ़ कीजिए, मुझे इस सवाल का जवाब नहीं मिल पाया।" # Sorry, I couldn't find an answer to this question.
+            updated_history = query.chat_history # Keep original history
+            return ChatResponse(answer=formatted_answer, updated_history=updated_history)
 
-        # Update the history with the new exchange for the response
-        updated_history = query.chat_history + [(query.question, answer)]
+        # --- Format the Response --- 
+        formatted_answer = format_response(raw_answer)
+        logger.info(f"Formatted answer: {formatted_answer[:100]}...")
+        # -------------------------
 
-        return ChatResponse(answer=answer, updated_history=updated_history)
+        # Update the history with the new exchange using the *formatted* answer
+        updated_history = query.chat_history + [(query.question, formatted_answer)]
+
+        return ChatResponse(answer=formatted_answer, updated_history=updated_history)
 
     # Keep existing specific error handling
     except (WeaviateConnectionError, WeaviateSchemaError, EmbeddingModelError) as e:
