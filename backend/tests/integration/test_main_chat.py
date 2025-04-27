@@ -107,7 +107,11 @@ def test_chat_endpoint_empty_answer_with_history(mock_create_chain, client):
     # Assert
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["answer"] == "माफ़ कीजिए, मुझे इस सवाल का जवाब नहीं मिल पाया।"
+    
+    # Check that the right language fallback message is used based on detected language
+    # Since our test question is in English, expect the English fallback message
+    assert response_json["answer"] == "I'm sorry, I couldn't find an answer to this question."
+    
     # Compare history against the expected JSON format (list of lists)
     assert response_json["updated_history"] == [list(item) for item in initial_history]
     mock_create_chain.assert_called_once()

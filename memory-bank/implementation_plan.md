@@ -4,6 +4,104 @@ This document outlines the planned phases for developing the AI-Powered Governme
 
 **Note on Environment:** The Python backend virtual environment is located at `backend/yojna`. Activate using `source backend/yojna/bin/activate` (macOS/Linux) from the workspace root before running backend commands.
 
+# Implementation Plan - Enhanced RAG Pipeline
+
+## Phase 1: Analysis and Design (Completed ✅)
+
+- [x] **1.1: Analyze Current Limitations**
+  - [x] Review existing prompt structure and limitations
+  - [x] Identify missing domain-specific context
+  - [x] Document issues with cross-document connections
+  - [x] Analyze response formatting gaps
+
+- [x] **1.2: Design Enhanced Prompts**
+  - [x] Draft query reformulation prompt
+  - [x] Draft comprehensive RAG prompt
+  - [x] Design entity extraction strategy
+  - [x] Plan response formatting approach
+
+## Phase 2: Implementation (Completed ✅)
+
+- [x] **2.1: Enhanced Prompts**
+  - [x] Implement "Yojna Khojna Question Reformulation System" prompt
+  - [x] Implement "Yojna Khojna Government Scheme Assistant" prompt
+  - [x] Remove sentence limitation
+
+- [x] **2.2: Entity Extraction System**
+  - [x] Implement domain-specific dictionary
+  - [x] Add multilingual NER with xx_ent_wiki_sm
+  - [x] Create regex fallback for when spaCy is unavailable
+  - [x] Add entity prioritization logic
+
+- [x] **2.3: Enhanced Retrieval**
+  - [x] Implement enhanced_retrieval_step function
+  - [x] Add contextual follow-up queries
+  - [x] Implement document deduplication
+
+- [x] **2.4: Response Formatting**
+  - [x] Implement format_response to highlight monetary amounts
+  - [x] Add language detection
+  - [x] Handle both Hindi and English responses
+
+## Phase 3: Testing (Completed ✅)
+
+- [x] **3.1: Unit Testing**
+  - [x] Test entity extraction
+  - [x] Test prompt functionality
+  - [x] Test response formatting
+
+- [x] **3.2: Integration Testing**
+  - [x] Test end-to-end enhanced RAG pipeline
+  - [x] Test language handling
+  - [x] Test empty/error responses
+
+- [x] **3.3: Test Infrastructure**
+  - [x] Create spaCy model verification script
+  - [x] Create test runner script
+  - [x] Fix all test failures
+
+## Phase 4: Evaluation (Next Steps)
+
+- [ ] **4.1: Manual Evaluation**
+  - [ ] Create test cases across different scheme categories
+  - [ ] Perform side-by-side comparisons with previous system
+  - [ ] Evaluate Hindi and English handling
+
+- [ ] **4.2: Benchmarking**
+  - [ ] Create benchmark dataset
+  - [ ] Measure improvements in:
+    - [ ] Answer completeness
+    - [ ] Cross-document connections
+    - [ ] Practical guidance quality
+    - [ ] Response formatting
+
+## Phase 5: Documentation and Deployment
+
+- [ ] **5.1: Documentation**
+  - [ ] Create user guide with examples
+  - [ ] Update technical documentation
+  - [ ] Create deployment guide with spaCy model instructions
+
+- [ ] **5.2: Deployment**
+  - [ ] Test in staging environment
+  - [ ] Update Docker configuration for spaCy models
+  - [ ] Deploy to production
+
+## Timeline
+
+- **Phases 1-3** (Analysis, Implementation, Testing): Completed
+- **Phase 4** (Evaluation): 1-2 weeks
+- **Phase 5** (Documentation and Deployment): 1-2 weeks
+
+## Key Metrics for Success
+
+- All test cases passing
+- Improved answer completeness (examples containing specific entitlement amounts)
+- Better cross-document synthesis
+- Consistent handling of both Hindi and English queries
+- Proper highlighting of monetary values
+- Functional multilingual entity extraction
+
 **Phase 1: Foundational Data Pipeline & Knowledge Base**
 
 *   **Goal:** Ingest government scheme documents, process them, and create a searchable knowledge base.
