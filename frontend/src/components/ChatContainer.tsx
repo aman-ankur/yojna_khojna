@@ -133,6 +133,7 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
             <ChatMessages 
               messages={messages} 
               isLoading={isLoading} 
+              onSendMessage={sendMessage}
             />
           </Box>
         )}
