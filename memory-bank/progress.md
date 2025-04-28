@@ -115,7 +115,7 @@
     *   Created extensive domain dictionary with 12 categories for government schemes.
     *   Implemented bilingual term matching for Hindi/English pairs.
     *   Added special extraction for monetary amounts, scheme names, etc.
-    *   Created robust regex fallback for when spaCy is unavailable.
+    *   Implemented robust regex fallback for when spaCy is unavailable.
     *   Added entity prioritization based on relevance to government schemes.
     *   Developed contextual follow-up query generation based on entity type.
     *   Created comprehensive test suite for entity extraction.
@@ -164,15 +164,30 @@
     *   Implemented comprehensive domain-specific entity extraction with multilingual support.
     *   Created extensive domain dictionary covering government scheme terminology.
     *   Added bilingual term matching for Hindi/English pairs.
+*   [x] **Task 4.3: Implement Follow-up Question Suggestions**
+    *   Created new SuggestedQuestions component for displaying question chips.
+    *   Added backend service for generating contextual question suggestions.
+    *   Implemented hybrid generation approach with templates and LLM.
+    *   Integrated with existing entity extraction system.
+    *   Added language detection to match the conversation language.
+    *   Created horizontally scrollable UI with tooltips for better user experience.
+    *   Built comprehensive test suite for frontend and backend components.
+
+**Current Tasks:**
+*   [ ] **Task 4.4: Optimize Suggested Questions Feature**
+    *   Improve UI interactions and appearance.
+    *   Add analytics to track suggestion effectiveness.
+    *   Enhance language support for Hindi templates.
+    *   Add caching to improve performance.
 
 **Next Tasks:**
-*   [ ] **Task 4.3: Complete Test Suite for Entity Extraction**
+*   [ ] **Task 4.5: Complete Test Suite for Entity Extraction**
     *   Implement remaining skipped/placeholder tests.
     *   Add integration tests for enhanced retrieval with entities.
     *   Verify format_response function with different monetary amounts.
-*   [ ] **Task 4.4: Validate/tune Hindi OCR**
-*   [ ] **Task 4.5: Plan structured data storage alongside vectors**
-*   [ ] **Task 4.6: Enhance Hindi input/display in frontend**
+*   [ ] **Task 4.6: Validate/tune Hindi OCR**
+*   [ ] **Task 4.7: Plan structured data storage alongside vectors**
+*   [ ] **Task 4.8: Enhance Hindi input/display in frontend**
 
 *Note: This file tracks the high-level progress. Detailed decisions and technical context are in other `memory-bank` files. Task numbering refined based on implementation progress.*
 
@@ -195,12 +210,20 @@
     *   Added entity prioritization based on relevance to government schemes.
     *   Developed contextual follow-up query generation based on entity type.
     *   Added documentation for entity extraction setup and strategy.
-    *   **Remaining:** Complete testing and evaluation of enhanced entity extraction.
 *   **Frontend Integration:** Sophisticated React UI with bilingual support.
+*   **Suggested Questions Feature (COMPLETED):**
+    *   Implemented frontend components for displaying follow-up question chips.
+    *   Added backend API endpoint for generating question suggestions.
+    *   Created hybrid generation strategy combining templates and LLM.
+    *   Added proper error handling and UI improvements.
+    *   Fixed function passing through component hierarchy for question clicks.
+    *   Enhanced text display with truncation and tooltips.
+    *   Implemented language matching for consistent experience.
 *   **Deployment:** Dockerized setup using `docker-compose.yml`.
 
 ## Current Focus
 
+*   Complete the optimization of the Suggested Questions feature.
 *   Complete tests for the domain-specific entity extraction.
 *   Evaluate the enhanced RAG pipeline with diverse queries to assess performance improvements.
 *   Address the multilingual handling (`{language}` variable) for proper bilingual responses.
@@ -258,15 +281,20 @@
 - Created test script to run all tests in the test suite
 - Fixed language detection in empty response tests
 
+### Suggested Questions Feature:
+- Implemented frontend components for displaying follow-up question chips
+- Created backend service for generating contextual and template-based questions
+- Added entity extraction for identifying scheme names, amounts, and documents
+- Implemented language detection to match conversation language
+- Set up comprehensive testing for frontend and backend components
+- Fixed function passing through component hierarchy to enable clickable chips
+- Improved text display with truncation and tooltips for better UX
+- Limited suggestions to 4 questions for better focus
+- Added robust error handling to prevent UI crashes
+
 ## ✅ Overall Status
 
-All 74 tests are now either passing (69) or appropriately skipped (5). The enhanced RAG pipeline has been successfully implemented with full test coverage, including:
-
-1. Domain-specific entity extraction with multilingual support
-2. Enhanced retrieval with follow-up searches based on extracted entities
-3. Reformulated prompts for better context understanding and practical answers
-4. Response formatting with monetary amount highlighting
-5. Proper language detection for Hindi/English queries
+All 74 tests are now either passing (69) or appropriately skipped (5). The enhanced RAG pipeline and Suggested Questions feature have been successfully implemented with full test coverage.
 
 ## 🔜 Recommended Next Steps
 
@@ -300,3 +328,6 @@ These are not blockers but could enhance the system further:
 - Consider registering the custom pytest mark `rag` to remove the warning
 - Optimize the entity extraction process for better performance
 - Add more comprehensive error handling for spaCy model failures
+- Implement analytics tracking for measuring suggestion effectiveness
+- Add caching for performance optimization
+- Expand language translations for more templates
