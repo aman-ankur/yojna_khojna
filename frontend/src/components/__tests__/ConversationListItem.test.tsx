@@ -4,23 +4,30 @@ import { LanguageProvider, useLanguage } from '../../components/LanguageToggle';
 import ConversationListItem from '../ConversationListItem';
 import { Conversation } from '../../services/conversationService';
 
-// Mock useLanguage
-vi.mock('../../components/LanguageToggle', async () => {
-  const actual = await vi.importActual('../../components/LanguageToggle');
-  return {
-    ...actual,
-    useLanguage: () => ({
-      language: 'en',
-      t: {
-        deleteConversation: 'Delete Conversation',
-        deleteConversationTitle: 'Delete Conversation?',
-        deleteConversationConfirm: 'Are you sure you want to delete the conversation',
-        cancel: 'Cancel',
-        delete: 'Delete'
-      }
-    })
-  };
-});
+// Mock the date-fns library
+vi.mock('date-fns', () => ({
+  formatDistanceToNow: () => '2 days ago'
+}));
+
+// Mock LanguageToggle
+vi.mock('../LanguageToggle', () => ({
+  useLanguage: () => ({
+    t: {
+      renameConversation: 'Rename',
+      deleteConversation: 'Delete',
+      save: 'Save',
+      cancel: 'Cancel',
+      deleteConversationTitle: 'Delete Conversation',
+      deleteConversationConfirm: 'Are you sure you want to delete',
+      delete: 'Delete',
+      pinConversation: 'Pin',
+      unpinConversation: 'Unpin',
+      pinLimitReached: 'Pin limit reached (3)',
+      pinLimitReachedTitle: 'Pin Limit Reached',
+      ok: 'OK'
+    }
+  })
+}));
 
 // Mock test conversation
 const mockConversation: Conversation = {
@@ -29,22 +36,44 @@ const mockConversation: Conversation = {
   messages: [],
   createdAt: '2023-01-01T00:00:00.000Z',
   updatedAt: '2023-01-05T00:00:00.000Z',
+  isPinned: false
+};
+
+const mockPinnedConversation: Conversation = {
+  id: 'pinned-conversation-id',
+  title: 'Pinned Conversation',
+  messages: [],
+  createdAt: '2023-01-02T00:00:00.000Z',
+  updatedAt: '2023-01-06T00:00:00.000Z',
+  isPinned: true,
+  pinnedAt: '2023-01-06T01:00:00.000Z'
 };
 
 // Mock functions
 const mockOnSelect = vi.fn();
 const mockOnDelete = vi.fn();
+const mockOnRename = vi.fn();
+const mockOnPin = vi.fn();
+const mockOnUnpin = vi.fn();
 
 // Wrap component with providers for testing
 const renderWithProviders = (
-  isActive: boolean = false
+  conversation = mockConversation,
+  isActive = false,
+  isPinned = false,
+  pinLimitReached = false
 ) => {
   return render(
     <ConversationListItem
-      conversation={mockConversation}
+      conversation={conversation}
       isActive={isActive}
       onSelect={mockOnSelect}
       onDelete={mockOnDelete}
+      onRename={mockOnRename}
+      onPin={mockOnPin}
+      onUnpin={mockOnUnpin}
+      isPinned={isPinned}
+      pinLimitReached={pinLimitReached}
     />
   );
 };
@@ -54,11 +83,11 @@ describe('ConversationListItem Component', () => {
     vi.clearAllMocks();
   });
 
-  it('should render the conversation title', () => {
+  it('renders conversation title and timestamp', () => {
     renderWithProviders();
     
-    // Title should be displayed
     expect(screen.getByText('Test Conversation')).toBeInTheDocument();
+    expect(screen.getByText('2 days ago')).toBeInTheDocument();
   });
   
   it('should render with active styling when isActive=true', () => {
@@ -76,15 +105,70 @@ describe('ConversationListItem Component', () => {
     expect(title.classList.toString()).toContain('MuiTypography');
   });
   
-  it('should call onSelect when clicked', () => {
+  it('calls onSelect when clicked', () => {
     renderWithProviders();
     
-    // Click on the conversation item
     const listItem = screen.getByTestId('conversation-item-test-conversation-id');
     fireEvent.click(listItem);
     
-    // onSelect should be called with the conversation ID
     expect(mockOnSelect).toHaveBeenCalledWith('test-conversation-id');
+  });
+  
+  it('shows pin button for unpinned conversation', () => {
+    renderWithProviders(mockConversation, false, false);
+    
+    const pinButton = screen.getByLabelText('Pin');
+    expect(pinButton).toBeInTheDocument();
+  });
+  
+  it('shows unpin button for pinned conversation', () => {
+    renderWithProviders(mockPinnedConversation, false, true);
+    
+    const unpinButton = screen.getByLabelText('Unpin');
+    expect(unpinButton).toBeInTheDocument();
+  });
+  
+  it('calls onPin when pin button is clicked', () => {
+    renderWithProviders(mockConversation, false, false);
+    
+    const pinButton = screen.getByLabelText('Pin');
+    fireEvent.click(pinButton);
+    
+    expect(mockOnPin).toHaveBeenCalledWith('test-conversation-id');
+  });
+  
+  it('calls onUnpin when unpin button is clicked', () => {
+    renderWithProviders(mockPinnedConversation, false, true);
+    
+    const unpinButton = screen.getByLabelText('Unpin');
+    fireEvent.click(unpinButton);
+    
+    expect(mockOnUnpin).toHaveBeenCalledWith('pinned-conversation-id');
+  });
+  
+  it('shows pin limit dialog when trying to pin with limit reached', async () => {
+    renderWithProviders(mockConversation, false, false, true);
+    
+    const pinButton = screen.getByLabelText('Pin');
+    fireEvent.click(pinButton);
+    
+    // The dialog should open
+    expect(screen.getByText('Pin Limit Reached')).toBeInTheDocument();
+    
+    // Confirm it doesn't call onPin
+    expect(mockOnPin).not.toHaveBeenCalled();
+    
+    // Close the dialog
+    const okButton = screen.getByRole('button', { name: 'OK' });
+    fireEvent.click(okButton);
+  });
+  
+  it('displays pin icon for pinned conversations', () => {
+    renderWithProviders(mockPinnedConversation, false, true);
+    
+    // There should be 2 pin icons: one in the title and one for the unpin button
+    const pinIcons = screen.getAllByTestId('PushPinIcon');
+    expect(pinIcons.length).toBeGreaterThan(0);
   });
   
   it('should open delete dialog when delete button is clicked', async () => {
