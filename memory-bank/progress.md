@@ -145,6 +145,16 @@
     *   Implemented bilingual support (Hindi/English) with language toggle.
     *   Added subtle animations and transitions for better user experience.
     *   Ensured responsive design for mobile and desktop.
+*   [x] **Task 3.7: UI Refinements and Feature Enhancements:**
+    *   Implemented sidebar color refinement with muted, elegant purple palette inspired by the "नागरिक" branding.
+    *   Created a more subtle and professional gradient color scheme throughout the UI.
+    *   Added the Pinned Conversations feature to pin important conversations at the top of the sidebar.
+    *   Built a Discover Schemes Page accessible from the sidebar for browsing government schemes.
+    *   Enhanced navigation behavior with improved button functionality:
+      *   Conversation button now opens the sidebar with all conversations.
+      *   Home button creates a new conversation or reuses an existing empty one.
+    *   Implemented responsive scheme cards with muted category colors.
+    *   Ensured WCAG AA compliance with proper color contrast throughout the interface.
 
 **Outcome:** A sophisticated, user-friendly React frontend with Claude-inspired design allows users to chat with the backend RAG system in both Hindi and English. The interface includes suggested prompts, image upload capability, and smooth animations for an enhanced user experience.
 
@@ -235,6 +245,8 @@
 *   Complete tests for the domain-specific entity extraction.
 *   Evaluate the enhanced RAG pipeline with diverse queries to assess performance improvements.
 *   Address the multilingual handling (`{language}` variable) for proper bilingual responses.
+*   Continue refining the UI with professional color schemes and improved user experience.
+*   Expand the Discover Schemes page with additional scheme categories and filtering options.
 
 ## Backlog / Future Ideas
 

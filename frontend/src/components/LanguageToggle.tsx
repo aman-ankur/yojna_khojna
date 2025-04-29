@@ -49,6 +49,20 @@ const translations = {
     settings: 'सेटिंग्स',
     confirmDelete: 'हटाने की पुष्टि करें',
     maxConversationsReached: 'अधिकतम वार्तालाप सीमा (25) तक पहुंच गए हैं। जारी रखने के लिए किसी वार्तालाप को हटाएं।',
+    pinnedConversations: "पिन किए गए",
+    otherConversations: "अन्य वार्तालाप",
+    pinConversation: "इस वार्तालाप को पिन करें",
+    unpinConversation: "इस वार्तालाप को अनपिन करें",
+    pinLimitReached: "पिन सीमा पहुँच गई (3)",
+    pinLimitReachedTitle: "पिन सीमा पहुँच गई",
+    pinLimitReachedMessage: "आप अधिकतम 3 वार्तालाप पिन कर सकते हैं। नया वार्तालाप पिन करने से पहले किसी मौजूदा वार्तालाप को अनपिन करें।",
+    ok: "ठीक है",
+    // Discover Page
+    discover: "खोजें",
+    discoverSchemes: "योजनाएँ खोजें",
+    discoverSchemesDescription: "विभिन्न श्रेणियों में सरकारी योजनाओं का पता लगाएं। किसी भी योजना के बारे में बातचीत शुरू करने के लिए उस पर क्लिक करें।",
+    searchSchemes: "योजनाएँ खोजें...",
+    noSchemesFound: "आपके फ़िल्टर से मेल खाती कोई योजना नहीं मिली। अपनी खोज या श्रेणी चयन को समायोजित करने का प्रयास करें।",
   },
   en: {
     welcome: 'Hello',
@@ -80,6 +94,20 @@ const translations = {
     settings: 'Settings',
     confirmDelete: 'Confirm Delete',
     maxConversationsReached: 'Maximum conversation limit (25) reached. Delete a conversation to continue.',
+    pinnedConversations: "Pinned",
+    otherConversations: "Other Conversations",
+    pinConversation: "Pin this conversation",
+    unpinConversation: "Unpin this conversation",
+    pinLimitReached: "Pin limit reached (3)",
+    pinLimitReachedTitle: "Pin Limit Reached",
+    pinLimitReachedMessage: "You can pin a maximum of 3 conversations. Please unpin an existing conversation before pinning a new one.",
+    ok: "OK",
+    // Discover Page
+    discover: "Discover",
+    discoverSchemes: "Discover Schemes",
+    discoverSchemesDescription: "Explore government schemes across different categories. Click on any scheme to start a conversation about it.",
+    searchSchemes: "Search schemes...",
+    noSchemesFound: "No schemes found matching your filters. Try adjusting your search or category selection.",
   }
 };
 

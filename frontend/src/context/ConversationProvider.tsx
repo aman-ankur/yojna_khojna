@@ -7,11 +7,16 @@ import { Conversation, Message } from '../services/conversationService';
 interface ConversationContextType {
   // All conversations
   conversations: Conversation[];
+  pinnedConversations: Conversation[];
+  unpinnedConversations: Conversation[];
   conversationsLoading: boolean;
   conversationsError: string | null;
   createConversation: () => Conversation | null;
   deleteConversation: (id: string) => void;
   renameConversation: (id: string, newTitle: string) => void;
+  pinConversation: (id: string) => void;
+  unpinConversation: (id: string) => void;
+  isPinLimitReached: () => boolean;
   refreshConversations: () => void;
   
   // Current conversation
@@ -24,40 +29,38 @@ interface ConversationContextType {
   refreshCurrentConversation: () => void;
 }
 
-// Create context with default values
-const ConversationContext = createContext<ConversationContextType>({
-  conversations: [],
-  conversationsLoading: false,
-  conversationsError: null,
-  createConversation: () => null,
-  deleteConversation: () => {},
-  renameConversation: () => {},
-  refreshConversations: () => {},
-  
-  currentConversation: null,
-  currentConversationLoading: false,
-  currentConversationError: null,
-  switchConversation: () => {},
-  addMessage: () => {},
-  createNewConversation: () => null,
-  refreshCurrentConversation: () => {},
-});
+// Create the context
+const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
 
-// Provider component
+// Context provider props
 interface ConversationProviderProps {
   children: ReactNode;
 }
+
+// Custom hook to use the context
+export const useConversationContext = () => {
+  const context = useContext(ConversationContext);
+  if (context === undefined) {
+    throw new Error('useConversationContext must be used within a ConversationProvider');
+  }
+  return context;
+};
 
 const ConversationProvider: FC<ConversationProviderProps> = ({ children }) => {
   // Use our custom hooks
   const {
     conversations,
+    pinnedConversations,
+    unpinnedConversations,
     loading: conversationsLoading,
     error: conversationsError,
     createConversation,
     deleteConversation,
     renameConversation,
-    refreshConversations
+    pinConversation,
+    unpinConversation,
+    refreshConversations,
+    isPinLimitReached
   } = useConversations();
   
   const {
@@ -74,11 +77,16 @@ const ConversationProvider: FC<ConversationProviderProps> = ({ children }) => {
   const contextValue: ConversationContextType = {
     // All conversations
     conversations,
+    pinnedConversations,
+    unpinnedConversations,
     conversationsLoading,
     conversationsError,
     createConversation,
     deleteConversation,
     renameConversation,
+    pinConversation,
+    unpinConversation,
+    isPinLimitReached,
     refreshConversations,
     
     // Current conversation
@@ -97,8 +105,5 @@ const ConversationProvider: FC<ConversationProviderProps> = ({ children }) => {
     </ConversationContext.Provider>
   );
 };
-
-// Custom hook for using the conversation context
-export const useConversationContext = () => useContext(ConversationContext);
 
 export default ConversationProvider; 
