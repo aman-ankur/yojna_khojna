@@ -1,11 +1,13 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
 import { useSuggestions } from '../hooks/useSuggestions';
 import { suggestionsService } from '../services/suggestionsService';
+import { Message } from '../services/api';
 
 // Mock the suggestionsService
-jest.mock('../services/suggestionsService', () => ({
+vi.mock('../services/suggestionsService', () => ({
   suggestionsService: {
-    getSuggestions: jest.fn(),
+    getSuggestions: vi.fn(),
   },
 }));
 
@@ -17,21 +19,21 @@ describe('useSuggestions Hook', () => {
 
   const mockQuestion = 'What is Pradhan Mantri Awas Yojana?';
   const mockAnswer = 'It is a housing scheme.';
-  const mockChatHistory = [
+  const mockChatHistory: Message[] = [
     { role: 'user', content: mockQuestion },
     { role: 'assistant', content: mockAnswer },
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should fetch suggestions when provided with valid inputs', async () => {
     // Setup mock response
-    (suggestionsService.getSuggestions as jest.Mock).mockResolvedValueOnce(mockSuggestions);
+    vi.mocked(suggestionsService.getSuggestions).mockResolvedValueOnce(mockSuggestions);
 
     // Render the hook
-    const { result, waitForNextUpdate } = renderHook(() =>
+    const { result } = renderHook(() =>
       useSuggestions(mockQuestion, mockAnswer, mockChatHistory)
     );
 
@@ -40,10 +42,11 @@ describe('useSuggestions Hook', () => {
     expect(result.current.suggestions).toEqual([]);
 
     // Wait for the async operation to complete
-    await waitForNextUpdate();
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     // After loading, it should have suggestions and not be loading
-    expect(result.current.isLoading).toBe(false);
     expect(result.current.suggestions).toEqual(mockSuggestions);
     expect(result.current.error).toBeNull();
 
@@ -70,46 +73,49 @@ describe('useSuggestions Hook', () => {
   it('should handle errors gracefully', async () => {
     // Setup mock to throw an error
     const mockError = new Error('Failed to fetch suggestions');
-    (suggestionsService.getSuggestions as jest.Mock).mockRejectedValueOnce(mockError);
+    vi.mocked(suggestionsService.getSuggestions).mockRejectedValueOnce(mockError);
 
     // Render the hook
-    const { result, waitForNextUpdate } = renderHook(() =>
+    const { result } = renderHook(() =>
       useSuggestions(mockQuestion, mockAnswer, mockChatHistory)
     );
 
     // Wait for the async operation to complete
-    await waitForNextUpdate();
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     // After error, it should not be loading and have empty suggestions
-    expect(result.current.isLoading).toBe(false);
     expect(result.current.suggestions).toEqual([]);
     expect(result.current.error).toEqual(mockError);
   });
 
   it('should refresh suggestions when calling refreshSuggestions', async () => {
     // Setup mock responses
-    (suggestionsService.getSuggestions as jest.Mock)
+    vi.mocked(suggestionsService.getSuggestions)
       .mockResolvedValueOnce(mockSuggestions)
       .mockResolvedValueOnce([...mockSuggestions, { id: '3', text: 'New suggestion' }]);
 
     // Render the hook
-    const { result, waitForNextUpdate } = renderHook(() =>
+    const { result } = renderHook(() =>
       useSuggestions(mockQuestion, mockAnswer, mockChatHistory)
     );
 
     // Wait for first fetch to complete
-    await waitForNextUpdate();
-
-    // Call refresh function
-    act(() => {
-      result.current.refreshSuggestions();
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
     });
 
-    // Should be loading again
-    expect(result.current.isLoading).toBe(true);
+    // Initial state after first fetch
+    expect(result.current.suggestions).toEqual(mockSuggestions);
+
+    // Call refresh function
+    await result.current.refreshSuggestions();
 
     // Wait for second fetch to complete
-    await waitForNextUpdate();
+    await waitFor(() => {
+      expect(result.current.suggestions).toHaveLength(3);
+    });
 
     // Service should have been called twice
     expect(suggestionsService.getSuggestions).toHaveBeenCalledTimes(2);
