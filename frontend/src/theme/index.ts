@@ -1,13 +1,14 @@
 import { ThemeOptions } from '@mui/material/styles';
+import { gradientColors } from './gradients';
 
 // Define custom theme options for MUI
 const themeOptions: ThemeOptions = {
   palette: {
     primary: {
-      main: '#8667D0', // Purple accent color
+      main: gradientColors.DEEP_PURPLE, // Update to use our gradient color
     },
     secondary: {
-      main: '#7254C6', // Darker purple for hover states
+      main: gradientColors.BLUE, // Update to use our gradient color
     },
     background: {
       default: '#FFFFFF', // White background
@@ -62,7 +63,7 @@ const themeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           '&:focus-visible': {
-            outline: '2px solid #8667D0',
+            outline: `2px solid ${gradientColors.DEEP_PURPLE}`,
             outlineOffset: '2px'
           }
         }
@@ -72,8 +73,39 @@ const themeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           '&:focus-within': {
-            boxShadow: '0 0 0 2px #8667D0'
+            boxShadow: `0 0 0 2px ${gradientColors.DEEP_PURPLE}`
           }
+        }
+      }
+    },
+    // Add new component styling for list items used in sidebar
+    MuiListItem: {
+      styleOverrides: {
+        root: {
+          borderRadius: '8px',
+          margin: '4px 0',
+          transition: 'all 0.2s ease-in-out',
+        }
+      }
+    },
+    // Style the IconButton component for sidebar
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+          }
+        }
+      }
+    },
+    // Add tooltip styling for better visibility
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          padding: '8px 12px',
+          fontSize: '0.8rem',
         }
       }
     }

@@ -7,6 +7,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import PushPinIcon from '@mui/icons-material/PushPin';
+import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -14,8 +16,11 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import { formatDistanceToNow } from 'date-fns';
 import { useLanguage } from './LanguageToggle';
+import { createGradientStyles, sidebarGradients, gradientColors } from '../theme/gradients';
+import { alpha } from '@mui/material/styles';
 
 interface ConversationListItemProps {
   conversation: Conversation;
@@ -23,6 +28,10 @@ interface ConversationListItemProps {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onRename?: (id: string, newTitle: string) => void;
+  onPin?: (id: string) => void;
+  onUnpin?: (id: string) => void;
+  isPinned?: boolean;
+  pinLimitReached?: boolean;
 }
 
 const ConversationListItem: FC<ConversationListItemProps> = ({
@@ -30,10 +39,15 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
   isActive,
   onSelect,
   onDelete,
-  onRename
+  onRename,
+  onPin,
+  onUnpin,
+  isPinned = false,
+  pinLimitReached = false
 }) => {
   const { t } = useLanguage();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pinLimitDialogOpen, setPinLimitDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [newTitle, setNewTitle] = useState(conversation.title);
   
@@ -79,6 +93,35 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
     }
     setIsEditing(false);
   };
+  
+  const handlePinClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the onSelect
+    if (!onPin) return;
+    
+    // Check if we're at the pin limit
+    if (!isPinned && pinLimitReached) {
+      setPinLimitDialogOpen(true);
+      return;
+    }
+    
+    try {
+      onPin(conversation.id);
+    } catch (error) {
+      // Handle error (should be caught at the hook level)
+      setPinLimitDialogOpen(true);
+    }
+  };
+  
+  const handleUnpinClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the onSelect
+    if (onUnpin) {
+      onUnpin(conversation.id);
+    }
+  };
+  
+  const handlePinLimitClose = () => {
+    setPinLimitDialogOpen(false);
+  };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewTitle(e.target.value);
@@ -96,6 +139,8 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
     }
   };
   
+  const isActionable = !isEditing;
+  
   return (
     <>
       <Box 
@@ -108,14 +153,38 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
           mb: 1,
           borderRadius: 1,
           cursor: isEditing ? 'default' : 'pointer',
-          backgroundColor: isActive ? '#f0f0f0' : 'transparent',
+          backgroundColor: isActive ? 
+            sidebarGradients.active : 
+            'transparent',
+          backgroundImage: isActive ? sidebarGradients.active : 'none',
+          color: isActive ? '#fff' : 'inherit',
+          transition: 'all 0.2s ease-in-out',
+          boxShadow: isActive ? 
+            `0 4px 8px ${alpha(gradientColors.DEEP_PURPLE, 0.3)}` : 
+            'none',
+          borderLeft: isActive ? 
+            `3px solid ${gradientColors.BLUE}` : 
+            isPinned ? `3px solid ${alpha(gradientColors.DEEP_PURPLE, 0.4)}` :
+            '3px solid transparent',
           '&:hover': {
-            backgroundColor: isActive ? '#f0f0f0' : '#f7f7f7',
+            backgroundColor: !isActive && !isEditing ? 
+              alpha(gradientColors.DEEP_PURPLE, 0.1) : 
+              isActive ? sidebarGradients.active : 'transparent',
+            boxShadow: !isActive && !isEditing ? 
+              `0 2px 6px ${alpha(gradientColors.DEEP_PURPLE, 0.2)}` :
+              isActive ? `0 4px 8px ${alpha(gradientColors.DEEP_PURPLE, 0.3)}` : 
+              'none',
           }
         }}
         data-testid={`conversation-item-${conversation.id}`}
       >
-        <Box sx={{ overflow: 'hidden', flex: 1 }}>
+        <Box sx={{ 
+          overflow: 'hidden', 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          ml: isPinned ? 0 : 0 // Keep alignment consistent whether pinned or not
+        }}>
           {isEditing ? (
             <TextField
               fullWidth
@@ -126,6 +195,13 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
               autoFocus
               onClick={(e) => e.stopPropagation()}
               inputProps={{ 'data-testid': 'edit-conversation-title' }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused fieldset': {
+                    borderColor: gradientColors.DEEP_PURPLE,
+                  },
+                },
+              }}
             />
           ) : (
             <>
@@ -133,12 +209,32 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
                 variant="subtitle1"
                 noWrap
                 sx={{
-                  fontWeight: isActive ? 'bold' : 'normal',
+                  fontWeight: isActive ? 'bold' : isPinned ? 'bold' : 'normal',
+                  color: isActive ? '#fff' : 'inherit',
+                  display: 'flex',
+                  alignItems: 'center'
                 }}
               >
+                {isPinned && (
+                  <PushPinIcon 
+                    fontSize="small" 
+                    sx={{ 
+                      mr: 0.5, 
+                      color: isActive ? '#fff' : alpha(gradientColors.DEEP_PURPLE, 0.7),
+                      transform: 'rotate(45deg)',
+                      fontSize: '0.9rem' 
+                    }} 
+                  />
+                )}
                 {conversation.title}
               </Typography>
-              <Typography variant="caption" color="text.secondary" noWrap>
+              <Typography 
+                variant="caption" 
+                noWrap
+                sx={{ 
+                  color: isActive ? alpha('#fff', 0.8) : 'text.secondary'
+                }}
+              >
                 {formattedDate}
               </Typography>
             </>
@@ -151,6 +247,9 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
               size="small" 
               onClick={handleSaveEdit}
               aria-label={t.save}
+              sx={{
+                color: isActive ? '#fff' : gradientColors.DEEP_PURPLE,
+              }}
             >
               <CheckIcon fontSize="small" />
             </IconButton>
@@ -158,25 +257,89 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
               size="small" 
               onClick={handleCancelEdit}
               aria-label={t.cancel}
+              sx={{
+                color: isActive ? '#fff' : 'text.secondary',
+              }}
             >
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
         ) : (
           <Box sx={{ display: 'flex' }}>
-            {onRename && (
+            {/* Pin/Unpin Button */}
+            {(onPin || onUnpin) && isActionable && (
+              isPinned ? (
+                <Tooltip title={t.unpinConversation || "Unpin"}>
+                  <IconButton 
+                    size="small" 
+                    onClick={handleUnpinClick}
+                    aria-label={t.unpinConversation || "Unpin"}
+                    sx={{
+                      color: isActive ? '#fff' : gradientColors.DEEP_PURPLE,
+                      '&:hover': {
+                        color: isActive ? alpha('#fff', 0.8) : alpha(gradientColors.DEEP_PURPLE, 0.8),
+                      }
+                    }}
+                  >
+                    <PushPinIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              ) : (
+                <Tooltip title={
+                  pinLimitReached ? 
+                    (t.pinLimitReached || "Pin limit reached (3)") : 
+                    (t.pinConversation || "Pin")
+                }>
+                  <IconButton 
+                    size="small" 
+                    onClick={handlePinClick}
+                    aria-label={t.pinConversation || "Pin"}
+                    sx={{
+                      color: isActive ? '#fff' : 'text.secondary',
+                      opacity: pinLimitReached ? 0.5 : 1,
+                      '&:hover': {
+                        color: isActive ? 
+                          '#fff' : 
+                          pinLimitReached ? 
+                            'text.secondary' : 
+                            gradientColors.DEEP_PURPLE,
+                      }
+                    }}
+                  >
+                    <PushPinOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )
+            )}
+            
+            {/* Edit Button */}
+            {onRename && isActionable && (
               <IconButton 
                 size="small" 
                 onClick={handleEditClick}
                 aria-label={t.renameConversation || "Rename"}
+                sx={{
+                  color: isActive ? '#fff' : 'text.secondary',
+                  '&:hover': {
+                    color: isActive ? '#fff' : gradientColors.DEEP_PURPLE,
+                  }
+                }}
               >
                 <EditIcon fontSize="small" />
               </IconButton>
             )}
+            
+            {/* Delete Button */}
             <IconButton 
               size="small" 
               onClick={handleDeleteClick}
               aria-label={t.deleteConversation}
+              sx={{
+                color: isActive ? '#fff' : 'text.secondary',
+                '&:hover': {
+                  color: isActive ? '#fff' : '#d32f2f',
+                }
+              }}
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -203,8 +366,52 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
           <Button onClick={handleDeleteCancel} color="primary">
             {t.cancel}
           </Button>
-          <Button onClick={handleDeleteConfirm} color="error" autoFocus>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            autoFocus
+            sx={{
+              background: 'linear-gradient(to right, #d32f2f, #f44336)',
+              color: '#fff',
+              '&:hover': {
+                background: 'linear-gradient(to right, #b71c1c, #d32f2f)',
+              }
+            }}
+          >
             {t.delete}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Pin limit reached dialog */}
+      <Dialog
+        open={pinLimitDialogOpen}
+        onClose={handlePinLimitClose}
+        aria-labelledby="pin-limit-dialog-title"
+        aria-describedby="pin-limit-dialog-description"
+      >
+        <DialogTitle id="pin-limit-dialog-title">
+          {t.pinLimitReachedTitle || "Pin Limit Reached"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="pin-limit-dialog-description">
+            {t.pinLimitReachedMessage || "You can pin a maximum of 3 conversations. Please unpin an existing conversation before pinning a new one."}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={handlePinLimitClose} 
+            color="primary"
+            autoFocus
+            sx={{
+              background: sidebarGradients.default,
+              color: '#fff',
+              '&:hover': {
+                background: sidebarGradients.hover,
+              }
+            }}
+          >
+            {t.ok || "OK"}
           </Button>
         </DialogActions>
       </Dialog>

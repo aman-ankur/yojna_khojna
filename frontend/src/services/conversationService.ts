@@ -8,17 +8,19 @@ export interface Message {
   timestamp: string;
 }
 
+export interface UserIdentity {
+  browserId: string;
+  createdAt: string;
+}
+
 export interface Conversation {
   id: string;
   title: string;
   messages: Message[];
   createdAt: string;
   updatedAt: string;
-}
-
-interface UserIdentity {
-  browserId: string;
-  createdAt: string;
+  isPinned?: boolean;
+  pinnedAt?: string;
 }
 
 // Constants
@@ -30,6 +32,7 @@ const STORAGE_KEYS = {
 };
 
 const MAX_CONVERSATIONS = 25;
+const MAX_PINNED_CONVERSATIONS = 3;
 
 // Initialize or get user identity
 const getUserIdentity = (): UserIdentity => {
@@ -126,9 +129,23 @@ export const conversationService = {
   
   // Get all stored conversations
   getAll: (): Conversation[] => {
-    return getConversations().sort((a, b) => 
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
+    // Get all conversations, sorted with pinned conversations first
+    const conversations = getConversations();
+    
+    // First sort by pinned status (pinned first)
+    return conversations.sort((a, b) => {
+      // First compare by pin status
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      
+      // If both are pinned, sort by pinnedAt
+      if (a.isPinned && b.isPinned && a.pinnedAt && b.pinnedAt) {
+        return new Date(b.pinnedAt).getTime() - new Date(a.pinnedAt).getTime();
+      }
+      
+      // Otherwise sort by updatedAt
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
   },
   
   // Get a specific conversation by ID
@@ -340,7 +357,90 @@ export const conversationService = {
     // Create a new conversation for a fresh start
     console.log("Creating new conversation in ensureCurrentConversation");
     return conversationService.create();
-  }
+  },
+  
+  // Pin a conversation
+  pinConversation: (id: string): Conversation => {
+    const conversations = getConversations();
+    const index = conversations.findIndex(c => c.id === id);
+    
+    if (index === -1) {
+      throw new Error(`Conversation with ID ${id} not found.`);
+    }
+    
+    // Check if already pinned
+    if (conversations[index].isPinned) {
+      return conversations[index];
+    }
+    
+    // Count existing pins
+    const pinnedCount = conversations.filter(c => c.isPinned).length;
+    
+    // Check if already at max pins
+    if (pinnedCount >= MAX_PINNED_CONVERSATIONS) {
+      throw new Error(`Maximum of ${MAX_PINNED_CONVERSATIONS} pinned conversations reached. Please unpin a conversation first.`);
+    }
+    
+    // Apply the pin
+    conversations[index].isPinned = true;
+    conversations[index].pinnedAt = new Date().toISOString();
+    
+    // Save to storage
+    saveConversations(conversations);
+    
+    // Dispatch event to notify listeners
+    dispatchConversationChangeEvent('update', id);
+    
+    return conversations[index];
+  },
+  
+  // Unpin a conversation
+  unpinConversation: (id: string): Conversation => {
+    const conversations = getConversations();
+    const index = conversations.findIndex(c => c.id === id);
+    
+    if (index === -1) {
+      throw new Error(`Conversation with ID ${id} not found.`);
+    }
+    
+    // Check if not pinned
+    if (!conversations[index].isPinned) {
+      return conversations[index];
+    }
+    
+    // Remove the pin
+    conversations[index].isPinned = false;
+    conversations[index].pinnedAt = undefined;
+    
+    // Save to storage
+    saveConversations(conversations);
+    
+    // Dispatch event to notify listeners
+    dispatchConversationChangeEvent('update', id);
+    
+    return conversations[index];
+  },
+  
+  // Get all pinned conversations
+  getPinnedConversations: (): Conversation[] => {
+    const conversations = getConversations();
+    return conversations
+      .filter(c => c.isPinned)
+      .sort((a, b) => {
+        // Sort by pinnedAt time (most recently pinned first)
+        if (a.pinnedAt && b.pinnedAt) {
+          return new Date(b.pinnedAt).getTime() - new Date(a.pinnedAt).getTime();
+        }
+        return 0;
+      });
+  },
+  
+  // Get all unpinned conversations
+  getUnpinnedConversations: (): Conversation[] => {
+    return getConversations()
+      .filter(c => !c.isPinned)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  },
 };
 
 export default conversationService; 
