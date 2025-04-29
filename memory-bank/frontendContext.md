@@ -123,4 +123,40 @@ frontend/
     *   Mocking API calls, language context, and browser features.
     *   Verifying UI behavior in different states (loading, error, etc.).
 *   **Setup:** Test configuration within `vite.config.ts`, setup file `src/setupTests.ts` for global mocks/imports.
-*   **Goal:** Ensure components function correctly in isolation and catch regressions during development. 
+*   **Goal:** Ensure components function correctly in isolation and catch regressions during development.
+
+## Frontend Patterns and Solutions
+
+### Scroll Management for Chat Interface
+
+*   **Problem:** When switching between conversations, the scroll position would not reset properly, preventing users from seeing the top of the conversation.
+  
+*   **Solution:** Implemented a multi-layered approach to ensure reliable scrolling behavior:
+  
+    1. **Component Remounting Control:**
+       * Use unique ID references to prevent interference between component instances
+       * Added special class and ID targeting for the first message to ensure visibility
+  
+    2. **Scroll Position Reset Techniques:**
+       * Primary approach: Direct DOM manipulation with `scrollTop = 0` in `useLayoutEffect`
+       * Backup approach: `scrollIntoView()` on both a hidden top anchor and the first message
+       * Tertiary approach: `scrollTo({top: 0})` API with proper timing
+       * Manual style override: Setting `scroll-behavior: auto` to prevent smooth scrolling interference
+  
+    3. **Event Timing and Race Condition Prevention:**
+       * Used `useLayoutEffect` for immediate synchronous DOM updates
+       * Implemented multiple timed reset attempts with different delays
+       * Added state tracking to avoid unnecessary scroll resets after user interaction
+  
+    4. **CSS Best Practices:**
+       * Added specificity with `!important` flags to override potential conflicts
+       * Used `scroll-margin-top` for better element positioning
+       * Added `will-change: scroll-position` hint for browser optimization
+       * Implemented `contain: content` for scroll performance
+  
+*   **Implementation Location:** 
+    * `ChatMessages.tsx` - Primary scroll management logic
+    * `ChatContainer.tsx` - Parent container structure
+    * `index.css` - Supporting CSS rules
+
+*   **Key Insight:** Browser scrolling behavior can be unpredictable, especially with complex layouts and dynamic content. The combination of several approaches creates redundancy that handles edge cases and ensures a consistent user experience. 

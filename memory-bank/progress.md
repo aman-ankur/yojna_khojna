@@ -219,6 +219,14 @@
     *   Fixed function passing through component hierarchy for question clicks.
     *   Enhanced text display with truncation and tooltips.
     *   Implemented language matching for consistent experience.
+*   **UI Scrolling Fix (COMPLETED):**
+    *   Resolved critical issue with chat container not properly scrolling to top when switching conversations.
+    *   Implemented comprehensive multi-layered solution:
+        *   Added useLayoutEffect with direct DOM manipulation to reset scroll position.
+        *   Created anchor elements to ensure proper scroll targeting.
+        *   Implemented special CSS rules to override conflicting styles.
+        *   Added multiple fallback techniques for cross-browser compatibility.
+    *   Updated frontend documentation with detailed explanation of the scroll management pattern.
 *   **Deployment:** Dockerized setup using `docker-compose.yml`.
 
 ## Current Focus
