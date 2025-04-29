@@ -293,17 +293,17 @@ export const getAllCategories = (): SchemeCategory[] => {
   return Array.from(categories);
 };
 
-// Category color mapping
+// Category color mapping - updated with more muted, professional colors
 const categoryColors: Record<SchemeCategory, string> = {
-  'agriculture': '#8C6E4B',
-  'education': '#4B6E8C',
-  'employment': '#6E4B8C',
-  'financial': '#6E8C4B',
-  'health': '#558B6E',
-  'housing': '#4B8C6E',
-  'rural': '#5C8C4B',
-  'social': '#4B5C8C',
-  'women': '#8C4B6E'
+  'agriculture': '#7A8C6E', // Muted sage green
+  'education': '#5D6E8C', // Muted slate blue
+  'employment': '#6E5D8C', // Muted dusty purple
+  'financial': '#6E7A5D', // Muted olive
+  'health': '#5D8C7A', // Muted teal
+  'housing': '#5D7A8C', // Muted blue-gray
+  'rural': '#6E8C5D', // Muted moss green
+  'social': '#5D5D8C', // Muted indigo
+  'women': '#8C5D7A'  // Muted mauve
 };
 
 // Get color for a category

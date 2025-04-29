@@ -157,7 +157,10 @@ const DiscoverPage: React.FC = () => {
                 onClick={() => handleCategoryClick(category)}
                 color={selectedCategory === category ? 'primary' : 'default'}
                 variant={selectedCategory === category ? 'filled' : 'outlined'}
-                sx={{ mb: 1 }}
+                sx={{ 
+                  mb: 1,
+                  opacity: 0.9, // Slightly reduce opacity for a more subtle look  
+                }}
               />
             ))}
           </Stack>

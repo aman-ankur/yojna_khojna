@@ -75,7 +75,8 @@ const ConversationList: FC<ConversationListProps> = ({
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text', 
             color: 'transparent',
-            fontWeight: 600
+            fontWeight: 600,
+            opacity: 0.95
           }}
         >
           {t.conversations}
@@ -93,7 +94,7 @@ const ConversationList: FC<ConversationListProps> = ({
           data-testid="new-conversation-button"
           sx={{
             background: sidebarGradients.default,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
             '&:hover': {
               background: sidebarGradients.hover,
             }
@@ -140,7 +141,7 @@ const ConversationList: FC<ConversationListProps> = ({
                   <PushPinIcon 
                     fontSize="small" 
                     sx={{ 
-                      color: alpha(gradientColors.DEEP_PURPLE, 0.7),
+                      color: alpha(gradientColors.ACCENT_PURPLE, 0.7),
                       fontSize: '0.9rem',
                       mr: 0.5,
                       transform: 'rotate(45deg)'
