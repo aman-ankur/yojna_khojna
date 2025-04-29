@@ -160,3 +160,28 @@ frontend/
     * `index.css` - Supporting CSS rules
 
 *   **Key Insight:** Browser scrolling behavior can be unpredictable, especially with complex layouts and dynamic content. The combination of several approaches creates redundancy that handles edge cases and ensures a consistent user experience. 
+
+## Styling Approach:
+* Material UI (MUI) v5+ for component library
+* Built-in theming with `ThemeProvider` for consistent styling
+* Custom component overrides for specialized styling needs
+* Responsive design approach using MUI's breakpoints
+
+## Color Scheme:
+* Primary color: Muted deep purple (`#635089`) - derived from "नागरिक" branding
+* Secondary color: Soft lavender (`#8A7AAD`)
+* Accent color: Medium purple (`#6F5F9E`)
+* Light neutral backgrounds with subtle color accents
+* Dark text for contrast and readability
+* Category-specific accent colors for scheme organization
+* Gradients used for interactive elements and visual enhancement
+
+## Key User Interactions:
+* **Chat History**: Users can access previous conversations via sidebar
+* **Pinned Conversations**: Important conversations can be pinned to the top of the sidebar (max 3)
+* **Conversation Navigation**: 
+  * Conversation button opens sidebar with full conversation list
+  * Home button creates new conversation or reuses empty one
+* **Language Toggle**: Users can switch between Hindi and English interfaces
+* **Scheme Discovery**: Users can browse and filter government schemes by category
+* **Follow-up Questions**: Suggested follow-up questions appear after assistant responses 
