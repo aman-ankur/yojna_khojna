@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SuggestedQuestions, { SuggestedQuestion } from '../components/SuggestedQuestions';
 
 describe('SuggestedQuestions Component', () => {
@@ -9,13 +10,13 @@ describe('SuggestedQuestions Component', () => {
     { id: '3', text: 'How do I apply for this scheme?' },
   ];
 
-  const mockOnQuestionClick = jest.fn();
+  const mockOnQuestionClick = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
-  test('renders loading state correctly', () => {
+  it('renders loading state correctly', () => {
     render(
       <SuggestedQuestions
         suggestions={[]}
@@ -27,7 +28,7 @@ describe('SuggestedQuestions Component', () => {
     expect(screen.getByText('Generating suggestions...')).toBeInTheDocument();
   });
 
-  test('renders nothing when no suggestions are provided', () => {
+  it('renders nothing when no suggestions are provided', () => {
     const { container } = render(
       <SuggestedQuestions
         suggestions={[]}
@@ -39,7 +40,7 @@ describe('SuggestedQuestions Component', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  test('renders suggestions as chips', () => {
+  it('renders suggestions as chips', () => {
     render(
       <SuggestedQuestions
         suggestions={mockSuggestions}
@@ -49,11 +50,11 @@ describe('SuggestedQuestions Component', () => {
     );
 
     mockSuggestions.forEach((suggestion) => {
-      expect(screen.getByText(suggestion.text)).toBeInTheDocument();
+      expect(screen.getByLabelText(suggestion.text)).toBeInTheDocument();
     });
   });
 
-  test('calls onQuestionClick when a suggestion chip is clicked', () => {
+  it('calls onQuestionClick when a suggestion chip is clicked', () => {
     render(
       <SuggestedQuestions
         suggestions={mockSuggestions}
@@ -62,16 +63,16 @@ describe('SuggestedQuestions Component', () => {
       />
     );
 
-    const firstSuggestion = screen.getByText(mockSuggestions[0].text);
+    const firstSuggestion = screen.getByLabelText(mockSuggestions[0].text);
     fireEvent.click(firstSuggestion);
 
     expect(mockOnQuestionClick).toHaveBeenCalledWith(mockSuggestions[0].text);
   });
 
-  test('handles null onQuestionClick without crashing', () => {
+  it('handles null onQuestionClick without crashing', () => {
     // Mock console.error to capture the error message
     const originalError = console.error;
-    console.error = jest.fn();
+    console.error = vi.fn();
 
     render(
       <SuggestedQuestions
@@ -82,7 +83,7 @@ describe('SuggestedQuestions Component', () => {
       />
     );
 
-    const firstSuggestion = screen.getByText(mockSuggestions[0].text);
+    const firstSuggestion = screen.getByLabelText(mockSuggestions[0].text);
     
     // This shouldn't throw an error when clicked
     fireEvent.click(firstSuggestion);
@@ -94,7 +95,7 @@ describe('SuggestedQuestions Component', () => {
     console.error = originalError;
   });
 
-  test('renders long question text with ellipsis', () => {
+  it('renders long question text with ellipsis', () => {
     const longQuestion = { 
       id: 'long', 
       text: 'This is a very long question that should be truncated with ellipsis when displayed in the SuggestedQuestions component'
@@ -108,12 +109,14 @@ describe('SuggestedQuestions Component', () => {
       />
     );
     
-    const chipElement = screen.getByText(longQuestion.text);
-    const parentElement = chipElement.closest('div');
+    const chipElement = screen.getByLabelText(longQuestion.text);
     
     expect(chipElement).toBeInTheDocument();
-    // Check that text is truncated in UI (this is a simplistic check since we can't easily check CSS)
-    expect(parentElement).toHaveStyle('overflow: hidden');
-    expect(parentElement).toHaveStyle('text-overflow: ellipsis');
+    const chipRoot = chipElement.closest('.MuiChip-root');
+    expect(chipRoot).toBeInTheDocument();
+    
+    const label = chipRoot?.querySelector('.MuiChip-label');
+    expect(label?.textContent?.startsWith('This is a very long')).toBeTruthy();
+    expect(label?.textContent?.endsWith('...')).toBeTruthy();
   });
 }); 

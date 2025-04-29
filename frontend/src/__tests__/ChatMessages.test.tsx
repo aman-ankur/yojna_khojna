@@ -1,13 +1,40 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ChatMessages from '../components/ChatMessages';
 import { Message } from '../services/api';
 import { SuggestedQuestion } from '../components/SuggestedQuestions';
 import * as suggestionsHook from '../hooks/useSuggestions';
 
 // Mock the useSuggestions hook
-jest.mock('../hooks/useSuggestions', () => ({
-  useSuggestions: jest.fn()
+vi.mock('../hooks/useSuggestions', async () => {
+  const actual = await vi.importActual('../hooks/useSuggestions');
+  return {
+    ...actual,
+    useSuggestions: vi.fn()
+  };
+});
+
+// Mock SuggestedQuestions component to avoid text truncation issues
+vi.mock('../components/SuggestedQuestions', () => ({
+  default: ({ suggestions, isLoading, onQuestionClick }) => {
+    if (isLoading) return <div data-testid="loading-suggestions">Generating suggestions...</div>;
+    if (!suggestions || suggestions.length === 0) return null;
+    return (
+      <div data-testid="suggested-questions">
+        {suggestions.map(suggestion => (
+          <button 
+            key={suggestion.id}
+            onClick={() => onQuestionClick?.(suggestion.text)}
+            data-testid={`suggestion-${suggestion.id}`}
+            aria-label={suggestion.text}
+          >
+            {suggestion.text}
+          </button>
+        ))}
+      </div>
+    );
+  }
 }));
 
 describe('ChatMessages Component', () => {
@@ -23,20 +50,20 @@ describe('ChatMessages Component', () => {
     { id: '4', text: 'When is the deadline to apply?' }
   ];
 
-  const mockSendMessage = jest.fn();
+  const mockSendMessage = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Setup the mock to return our mock suggestions
-    (suggestionsHook.useSuggestions as jest.Mock).mockReturnValue({
+    vi.mocked(suggestionsHook.useSuggestions).mockReturnValue({
       suggestions: mockSuggestions,
       isLoading: false,
       error: null,
-      refreshSuggestions: jest.fn()
+      refreshSuggestions: vi.fn()
     });
   });
 
-  test('renders user and assistant messages correctly', () => {
+  it('renders user and assistant messages correctly', () => {
     render(
       <ChatMessages 
         messages={mockMessages} 
@@ -49,7 +76,7 @@ describe('ChatMessages Component', () => {
     expect(screen.getByText(mockMessages[1].content)).toBeInTheDocument();
   });
 
-  test('renders suggested questions after the last assistant message', () => {
+  it('renders suggested questions after the last assistant message', () => {
     render(
       <ChatMessages 
         messages={mockMessages} 
@@ -57,13 +84,16 @@ describe('ChatMessages Component', () => {
       />
     );
 
-    // Check for the suggested questions
+    // Check for the suggested questions container
+    expect(screen.getByTestId('suggested-questions')).toBeInTheDocument();
+    
+    // Check for specific suggestion buttons (using our mocked component)
     mockSuggestions.forEach(suggestion => {
-      expect(screen.getByText(suggestion.text)).toBeInTheDocument();
+      expect(screen.getByTestId(`suggestion-${suggestion.id}`)).toBeInTheDocument();
     });
   });
 
-  test('clicking a suggested question calls onSendMessage', () => {
+  it('clicking a suggested question calls onSendMessage', () => {
     render(
       <ChatMessages 
         messages={mockMessages} 
@@ -71,18 +101,18 @@ describe('ChatMessages Component', () => {
       />
     );
 
-    // Find and click a suggestion
-    const suggestionChip = screen.getByText(mockSuggestions[0].text);
-    fireEvent.click(suggestionChip);
+    // Find and click a suggestion using our test-specific button
+    const suggestionButton = screen.getByTestId(`suggestion-${mockSuggestions[0].id}`);
+    fireEvent.click(suggestionButton);
 
     // The mock function should have been called with the question text
     expect(mockSendMessage).toHaveBeenCalledWith(mockSuggestions[0].text);
   });
 
-  test('handles null onSendMessage prop gracefully', () => {
+  it('handles null onSendMessage prop gracefully', () => {
     // Mock console.error to prevent test output pollution
     const originalError = console.error;
-    console.error = jest.fn();
+    console.error = vi.fn();
 
     render(
       <ChatMessages 
@@ -93,8 +123,8 @@ describe('ChatMessages Component', () => {
     );
 
     // Find and click a suggestion
-    const suggestionChip = screen.getByText(mockSuggestions[0].text);
-    fireEvent.click(suggestionChip);
+    const suggestionButton = screen.getByTestId(`suggestion-${mockSuggestions[0].id}`);
+    fireEvent.click(suggestionButton);
 
     // Should log the error
     expect(console.error).toHaveBeenCalledWith('onSendMessage is not a function');
@@ -103,13 +133,13 @@ describe('ChatMessages Component', () => {
     console.error = originalError;
   });
 
-  test('shows loading state for suggestions when loading', () => {
+  it('shows loading state for suggestions when loading', () => {
     // Mock the hook to return loading state
-    (suggestionsHook.useSuggestions as jest.Mock).mockReturnValue({
+    vi.mocked(suggestionsHook.useSuggestions).mockReturnValue({
       suggestions: [],
       isLoading: true,
       error: null,
-      refreshSuggestions: jest.fn()
+      refreshSuggestions: vi.fn()
     });
 
     render(
@@ -120,10 +150,10 @@ describe('ChatMessages Component', () => {
     );
 
     // Should show loading indicator
-    expect(screen.getByText('Generating suggestions...')).toBeInTheDocument();
+    expect(screen.getByTestId('loading-suggestions')).toBeInTheDocument();
   });
 
-  test('does not show suggestions for user messages', () => {
+  it('does not show suggestions for user messages', () => {
     // Setup with only a user message as the last message
     const userLastMessages = [
       { role: 'assistant', content: 'It is a housing scheme.' },
@@ -137,9 +167,7 @@ describe('ChatMessages Component', () => {
       />
     );
 
-    // The suggestions should not be rendered (they only appear after assistant messages)
-    mockSuggestions.forEach(suggestion => {
-      expect(screen.queryByText(suggestion.text)).not.toBeInTheDocument();
-    });
+    // The suggestions container should not be rendered
+    expect(screen.queryByTestId('suggested-questions')).not.toBeInTheDocument();
   });
 }); 

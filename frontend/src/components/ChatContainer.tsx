@@ -9,8 +9,9 @@ import WelcomeHeader from './WelcomeHeader';
 import SuggestedPrompts from './SuggestedPrompts';
 import ChatInput from './ChatInput';
 import ChatMessages from './ChatMessages';
-import { chatService, Message } from '../services/api';
+import { chatService, Message as ApiMessage } from '../services/api';
 import { useLanguage } from './LanguageToggle';
+import useCurrentConversation from '../hooks/useCurrentConversation';
 
 interface ChatContainerProps {
   userName?: string;
@@ -18,16 +19,41 @@ interface ChatContainerProps {
 
 const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
   const { t } = useLanguage();
-  // State to track if conversation has started
-  const [conversationStarted, setConversationStarted] = useState<boolean>(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  
+  // Get the current conversation
+  const { 
+    currentConversation, 
+    loading: conversationLoading, 
+    error: conversationError,
+    addMessage,
+    refreshCurrentConversation
+  } = useCurrentConversation();
+  
+  // Local state
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Derive conversation started from current conversation
+  const conversationStarted = currentConversation?.messages && currentConversation.messages.length > 0;
+
+  // Extract messages for display
+  const messages = currentConversation?.messages?.map(msg => ({
+    role: msg.role,
+    content: msg.content
+  })) || [];
+
+  // Add debug logging for conversation changes
+  useEffect(() => {
+    console.log(`🔄 ChatContainer: conversation changed to: ${currentConversation?.id}`);
+    console.log(`Messages count: ${messages.length}`);
+  }, [currentConversation?.id, messages.length]);
+
   // Auto scroll to bottom of messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current && messages.length > 0) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, isLoading]);
 
   // Start conversation from suggested prompt
@@ -37,39 +63,45 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
   
   // Handle sending message
   const sendMessage = async (text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim() || !currentConversation) return;
     
-    // If first message, transition to conversation view
-    if (!conversationStarted) {
-      setConversationStarted(true);
-    }
+    // Add user message to the current conversation
+    addMessage({
+      role: 'user',
+      content: text
+    });
     
-    // Add user message
-    const userMessage: Message = { role: 'user', content: text };
-    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     setError(null);
     
     try {
-      // Transform frontend message history (Message[]) to backend expected format (List[Tuple[str, str]])
+      // Transform conversation history for backend
       const backendHistory: [string, string][] = [];
-      for (let i = 0; i < messages.length; i += 2) {
+      const conversationMessages = currentConversation.messages;
+      
+      for (let i = 0; i < conversationMessages.length - 1; i += 2) {
         // Ensure we have a pair of user and assistant messages
-        if (messages[i]?.role === 'user' && messages[i+1]?.role === 'assistant') {
-          backendHistory.push([messages[i].content, messages[i+1].content]);
+        if (
+          conversationMessages[i]?.role === 'user' && 
+          conversationMessages[i+1]?.role === 'assistant'
+        ) {
+          backendHistory.push([
+            conversationMessages[i].content, 
+            conversationMessages[i+1].content
+          ]);
         }
-        // Handle potential edge cases like the last message being a user message
-        // For this specific chain type, only complete pairs are usually needed for history.
       }
 
       const response = await chatService.sendMessage({
         question: text,
-        chat_history: backendHistory // Send the transformed history
+        chat_history: backendHistory as any
       });
       
-      // Directly add the assistant's response to the messages state
-      const assistantMessage: Message = { role: 'assistant', content: response.answer };
-      setMessages(prev => [...prev, assistantMessage]);
+      // Add assistant response to the conversation
+      addMessage({
+        role: 'assistant',
+        content: response.answer
+      });
 
     } catch (err) {
       console.error('Error communicating with the backend:', err);
@@ -81,25 +113,25 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
   
   // Handle image upload (placeholder)
   const handleImageUpload = async (file: File) => {
-    // Implementation would depend on your backend API
     console.log('Image upload:', file.name);
-    // You could upload the image and then reference it in a message
   };
   
   return (
-    <Box sx={{ 
-      flex: 1, 
-      display: 'flex', 
-      flexDirection: 'column',
-      height: '100%',
-      maxWidth: '1100px',
-      width: '100%',
-      mx: 'auto',
-      position: 'relative'
-    }}>
-      {/* Paper container to add border around the entire chat area */}
-      <Paper 
-        elevation={0}
+    <Box
+      className="chat-outer-container"
+      sx={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column',
+        height: '100%',
+        maxWidth: '1100px',
+        width: '100%',
+        mx: 'auto',
+      }}
+    >
+      {/* Main chat area with message display and input */}
+      <Box 
+        className="chat-scroll-container"
         sx={{
           flex: 1,
           display: 'flex',
@@ -107,58 +139,77 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
           border: '1px solid rgba(0,0,0,0.12)',
           borderRadius: '12px',
           overflow: 'hidden',
-          height: '100%'
+          height: '100%',
         }}
       >
-        {/* Conditional rendering based on conversation state */}
-        {!conversationStarted ? (
-          // Welcome view with prompts
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column',
+        {/* Content area (welcome or messages) */}
+        <Box 
+          className="chat-content-area"
+          sx={{ 
             flex: 1,
-            overflow: 'auto'
-          }}>
-            <WelcomeHeader userName={userName} />
-            <SuggestedPrompts onPromptClick={handlePromptClick} />
-          </Box>
-        ) : (
-          // Conversation view with messages
-          <Box sx={{ 
-            display: 'flex', 
+            height: 'calc(100% - 60px)', // Reserve space for input
+            display: 'flex',
             flexDirection: 'column',
-            flex: 1,
-            overflow: 'hidden'
-          }}>
+            overflow: 'hidden', // Only messages container should scroll
+            position: 'static', // Changed from relative to avoid positioning issues
+          }}
+        >
+          {!conversationStarted ? (
+            // Welcome view with prompts
+            <Box sx={{ 
+              height: '100%',
+              overflow: 'auto',
+              padding: '20px',
+            }}>
+              <WelcomeHeader userName={userName} />
+              <SuggestedPrompts onPromptClick={handlePromptClick} />
+            </Box>
+          ) : (
+            // Chat messages - this is the only scrollable container
             <ChatMessages 
               messages={messages} 
               isLoading={isLoading} 
               onSendMessage={sendMessage}
             />
-          </Box>
-        )}
+          )}
+        </Box>
         
         {/* Reference for scrolling to bottom */}
         <div ref={messagesEndRef} />
         
         {/* Chat input shown in both views */}
-        <ChatInput 
-          onSendMessage={sendMessage}
-          onImageUpload={handleImageUpload}
-          disabled={isLoading}
-          isConversationStarted={conversationStarted}
-        />
-      </Paper>
+        <Box 
+          className="chat-input-container"
+          sx={{
+            borderTop: '1px solid rgba(0,0,0,0.08)',
+            padding: '10px',
+            flexShrink: 0,
+          }}
+        >
+          <ChatInput 
+            onSendMessage={sendMessage}
+            onImageUpload={handleImageUpload}
+            disabled={isLoading || conversationLoading}
+            isConversationStarted={!!conversationStarted}
+          />
+        </Box>
+      </Box>
       
       {/* Error Snackbar */}
       <Snackbar
-        open={!!error}
+        open={!!error || !!conversationError}
         autoHideDuration={6000}
-        onClose={() => setError(null)}
+        onClose={() => {
+          setError(null);
+        }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
-          {error}
+        <Alert 
+          onClose={() => setError(null)} 
+          severity="error" 
+          sx={{ width: '100%' }}
+        >
+          {error || conversationError}
         </Alert>
       </Snackbar>
     </Box>
