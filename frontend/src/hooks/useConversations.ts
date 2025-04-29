@@ -7,6 +7,8 @@ import conversationService, { Conversation } from '../services/conversationServi
  */
 export const useConversations = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [pinnedConversations, setPinnedConversations] = useState<Conversation[]>([]);
+  const [unpinnedConversations, setUnpinnedConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,6 +21,14 @@ export const useConversations = () => {
       // Get all conversations
       const allConversations = conversationService.getAll();
       setConversations(allConversations);
+      
+      // Split into pinned and unpinned
+      const pinned = conversationService.getPinnedConversations();
+      const unpinned = conversationService.getUnpinnedConversations();
+      
+      setPinnedConversations(pinned);
+      setUnpinnedConversations(unpinned);
+      
       setError(null);
     } catch (err) {
       console.error('Error loading conversations:', err);
@@ -65,6 +75,41 @@ export const useConversations = () => {
       setError('Failed to rename conversation');
     }
   }, [loadConversations]);
+  
+  // Pin a conversation
+  const pinConversation = useCallback((id: string) => {
+    try {
+      conversationService.pinConversation(id);
+      // Update state with the pinned conversation
+      loadConversations();
+    } catch (err) {
+      console.error('Error pinning conversation:', err);
+      setError(err instanceof Error ? err.message : 'Failed to pin conversation');
+      throw err; // Re-throw to allow UI to show the error (e.g., max pins reached)
+    }
+  }, [loadConversations]);
+  
+  // Unpin a conversation
+  const unpinConversation = useCallback((id: string) => {
+    try {
+      conversationService.unpinConversation(id);
+      // Update state with the unpinned conversation
+      loadConversations();
+    } catch (err) {
+      console.error('Error unpinning conversation:', err);
+      setError('Failed to unpin conversation');
+    }
+  }, [loadConversations]);
+  
+  // Get current pin count
+  const getPinnedCount = useCallback(() => {
+    return pinnedConversations.length;
+  }, [pinnedConversations]);
+  
+  // Check if pin limit reached
+  const isPinLimitReached = useCallback(() => {
+    return pinnedConversations.length >= 3;
+  }, [pinnedConversations]);
 
   // Initialize on mount
   useEffect(() => {
@@ -73,12 +118,18 @@ export const useConversations = () => {
 
   return {
     conversations,
+    pinnedConversations,
+    unpinnedConversations,
     loading,
     error,
     createConversation,
     deleteConversation,
     renameConversation,
-    refreshConversations: loadConversations
+    pinConversation,
+    unpinConversation,
+    refreshConversations: loadConversations,
+    getPinnedCount,
+    isPinLimitReached
   };
 };
 
