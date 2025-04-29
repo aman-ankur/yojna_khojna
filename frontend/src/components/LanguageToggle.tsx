@@ -34,6 +34,21 @@ const translations = {
     benefits: "योजना के लाभों की जानकारी पाएं",
     govtHelp: "सरकारी सहायता के बारे में पूछें",
     error: 'कोई त्रुटि हुई। कृपया पुनः प्रयास करें।',
+    // New conversation history translations
+    conversations: 'वार्तालाप',
+    newConversation: 'नई वार्तालाप',
+    deleteConversation: 'वार्तालाप हटाएं',
+    deleteConversationTitle: 'वार्तालाप हटाएं?',
+    deleteConversationConfirm: 'क्या आप इस वार्तालाप को हटाना चाहते हैं',
+    cancel: 'रद्द करें',
+    delete: 'हटाएं',
+    noConversations: 'कोई वार्तालाप नहीं। नया बनाने के लिए ऊपर बटन पर क्लिक करें।',
+    expand: 'विस्तार करें',
+    collapse: 'संकुचित करें',
+    home: 'होम',
+    settings: 'सेटिंग्स',
+    confirmDelete: 'हटाने की पुष्टि करें',
+    maxConversationsReached: 'अधिकतम वार्तालाप सीमा (25) तक पहुंच गए हैं। जारी रखने के लिए किसी वार्तालाप को हटाएं।',
   },
   en: {
     welcome: 'Hello',
@@ -50,6 +65,21 @@ const translations = {
     benefits: "Get information about scheme benefits",
     govtHelp: "Ask about government assistance",
     error: 'An error occurred. Please try again.',
+    // New conversation history translations
+    conversations: 'Conversations',
+    newConversation: 'New Conversation',
+    deleteConversation: 'Delete Conversation',
+    deleteConversationTitle: 'Delete Conversation?',
+    deleteConversationConfirm: 'Are you sure you want to delete the conversation',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    noConversations: 'No conversations yet. Click the button above to create one.',
+    expand: 'Expand',
+    collapse: 'Collapse',
+    home: 'Home',
+    settings: 'Settings',
+    confirmDelete: 'Confirm Delete',
+    maxConversationsReached: 'Maximum conversation limit (25) reached. Delete a conversation to continue.',
   }
 };
 
