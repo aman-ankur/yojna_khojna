@@ -15,6 +15,7 @@ interface ConversationListProps {
   loading: boolean;
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
+  onRenameConversation?: (id: string, newTitle: string) => void;
   onNewConversation: () => void;
 }
 
@@ -24,6 +25,7 @@ const ConversationList: FC<ConversationListProps> = ({
   loading,
   onSelectConversation,
   onDeleteConversation,
+  onRenameConversation,
   onNewConversation
 }) => {
   const { t } = useLanguage();
@@ -35,17 +37,18 @@ const ConversationList: FC<ConversationListProps> = ({
         flexDirection: 'column',
         height: '100%',
         width: '100%',
-        overflowY: 'hidden',
+        overflow: 'hidden',
       }}
       data-testid="conversation-list"
     >
-      {/* Header with new conversation button */}
+      {/* Header with new conversation button - fixed */}
       <Box
         sx={{
           p: 2,
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
+          flexShrink: 0,
         }}
       >
         <Typography variant="h6" component="h2">
@@ -56,7 +59,10 @@ const ConversationList: FC<ConversationListProps> = ({
           variant="contained"
           startIcon={<AddIcon />}
           fullWidth
-          onClick={onNewConversation}
+          onClick={(e) => {
+            console.log("ConversationList new conversation button clicked");
+            onNewConversation();
+          }}
           disabled={loading}
           data-testid="new-conversation-button"
         >
@@ -66,13 +72,17 @@ const ConversationList: FC<ConversationListProps> = ({
       
       <Divider />
       
-      {/* Conversation list */}
+      {/* Conversation list - scrollable */}
       <Box
+        className="conversations-scrollable"
         sx={{
           flex: 1,
           overflowY: 'auto',
+          overflowX: 'hidden',
           p: 2,
           pt: 1,
+          height: 0, // This forces flex to calculate the height correctly
+          minHeight: 0,
         }}
       >
         {loading ? (
@@ -91,6 +101,7 @@ const ConversationList: FC<ConversationListProps> = ({
               isActive={conversation.id === currentConversationId}
               onSelect={onSelectConversation}
               onDelete={onDeleteConversation}
+              onRename={onRenameConversation}
             />
           ))
         )}

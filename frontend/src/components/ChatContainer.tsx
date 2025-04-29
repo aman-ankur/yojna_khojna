@@ -25,7 +25,8 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
     currentConversation, 
     loading: conversationLoading, 
     error: conversationError,
-    addMessage 
+    addMessage,
+    refreshCurrentConversation
   } = useCurrentConversation();
   
   // Local state
@@ -34,7 +35,7 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Derive conversation started from current conversation
-  const conversationStarted = currentConversation?.messages?.length > 0;
+  const conversationStarted = currentConversation?.messages && currentConversation.messages.length > 0;
 
   // Extract messages for display
   const messages = currentConversation?.messages?.map(msg => ({
@@ -42,9 +43,17 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
     content: msg.content
   })) || [];
 
+  // Add debug logging for conversation changes
+  useEffect(() => {
+    console.log(`🔄 ChatContainer: conversation changed to: ${currentConversation?.id}`);
+    console.log(`Messages count: ${messages.length}`);
+  }, [currentConversation?.id, messages.length]);
+
   // Auto scroll to bottom of messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current && messages.length > 0) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, isLoading]);
 
   // Start conversation from suggested prompt
@@ -108,19 +117,21 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
   };
   
   return (
-    <Box sx={{ 
-      flex: 1, 
-      display: 'flex', 
-      flexDirection: 'column',
-      height: '100%',
-      maxWidth: '1100px',
-      width: '100%',
-      mx: 'auto',
-      position: 'relative'
-    }}>
-      {/* Paper container to add border around the entire chat area */}
-      <Paper 
-        elevation={0}
+    <Box
+      className="chat-outer-container"
+      sx={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column',
+        height: '100%',
+        maxWidth: '1100px',
+        width: '100%',
+        mx: 'auto',
+      }}
+    >
+      {/* Main chat area with message display and input */}
+      <Box 
+        className="chat-scroll-container"
         sx={{
           flex: 1,
           display: 'flex',
@@ -128,48 +139,61 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
           border: '1px solid rgba(0,0,0,0.12)',
           borderRadius: '12px',
           overflow: 'hidden',
-          height: '100%'
+          height: '100%',
         }}
       >
-        {/* Conditional rendering based on conversation state */}
-        {!conversationStarted ? (
-          // Welcome view with prompts
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column',
+        {/* Content area (welcome or messages) */}
+        <Box 
+          className="chat-content-area"
+          sx={{ 
             flex: 1,
-            overflow: 'auto'
-          }}>
-            <WelcomeHeader userName={userName} />
-            <SuggestedPrompts onPromptClick={handlePromptClick} />
-          </Box>
-        ) : (
-          // Conversation view with messages
-          <Box sx={{ 
-            display: 'flex', 
+            height: 'calc(100% - 60px)', // Reserve space for input
+            display: 'flex',
             flexDirection: 'column',
-            flex: 1,
-            overflow: 'hidden'
-          }}>
+            overflow: 'hidden', // Only messages container should scroll
+            position: 'static', // Changed from relative to avoid positioning issues
+          }}
+        >
+          {!conversationStarted ? (
+            // Welcome view with prompts
+            <Box sx={{ 
+              height: '100%',
+              overflow: 'auto',
+              padding: '20px',
+            }}>
+              <WelcomeHeader userName={userName} />
+              <SuggestedPrompts onPromptClick={handlePromptClick} />
+            </Box>
+          ) : (
+            // Chat messages - this is the only scrollable container
             <ChatMessages 
               messages={messages} 
               isLoading={isLoading} 
               onSendMessage={sendMessage}
             />
-          </Box>
-        )}
+          )}
+        </Box>
         
         {/* Reference for scrolling to bottom */}
         <div ref={messagesEndRef} />
         
         {/* Chat input shown in both views */}
-        <ChatInput 
-          onSendMessage={sendMessage}
-          onImageUpload={handleImageUpload}
-          disabled={isLoading || conversationLoading}
-          isConversationStarted={!!conversationStarted}
-        />
-      </Paper>
+        <Box 
+          className="chat-input-container"
+          sx={{
+            borderTop: '1px solid rgba(0,0,0,0.08)',
+            padding: '10px',
+            flexShrink: 0,
+          }}
+        >
+          <ChatInput 
+            onSendMessage={sendMessage}
+            onImageUpload={handleImageUpload}
+            disabled={isLoading || conversationLoading}
+            isConversationStarted={!!conversationStarted}
+          />
+        </Box>
+      </Box>
       
       {/* Error Snackbar */}
       <Snackbar

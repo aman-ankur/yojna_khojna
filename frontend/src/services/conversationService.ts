@@ -25,7 +25,8 @@ interface UserIdentity {
 const STORAGE_KEYS = {
   USER_IDENTITY: 'yk_user_identity',
   CONVERSATIONS: 'yk_conversations',
-  CURRENT_CONVERSATION: 'yk_current_conversation'
+  CURRENT_CONVERSATION: 'yk_current_conversation',
+  LAST_CREATION_TIME: 'yk_last_creation_time'
 };
 
 const MAX_CONVERSATIONS = 25;
@@ -95,6 +96,27 @@ const generateTitle = (messages: Message[]): string => {
   return titleText;
 };
 
+// Custom event for notifying components of conversation changes
+const dispatchConversationChangeEvent = (type: string, conversationId: string) => {
+  const event = new CustomEvent('yk_conversation_change', {
+    detail: { type, conversationId }
+  });
+  window.dispatchEvent(event);
+};
+
+// Lock mechanism to prevent multiple creates
+let createOperationInProgress = false;
+let createOperationTimeoutId: number | null = null;
+
+// Clear create operation lock after a timeout
+const clearCreateOperationLock = () => {
+  createOperationInProgress = false;
+  if (createOperationTimeoutId) {
+    clearTimeout(createOperationTimeoutId);
+    createOperationTimeoutId = null;
+  }
+};
+
 // Core conversation management functions
 export const conversationService = {
   // Initialize the service - ensure user identity exists
@@ -125,26 +147,73 @@ export const conversationService = {
   
   // Create a new conversation
   create: (): Conversation => {
-    const conversations = getConversations();
-    
-    // Check if maximum limit reached
-    if (conversations.length >= MAX_CONVERSATIONS) {
-      throw new Error(`Maximum limit of ${MAX_CONVERSATIONS} conversations reached. Please delete some conversations.`);
+    // Check if another create operation is in progress
+    if (createOperationInProgress) {
+      console.log("Create operation already in progress - returning most recent conversation");
+      const conversations = getConversations();
+      if (conversations.length > 0) {
+        const mostRecent = conversations.sort((a, b) => 
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        )[0];
+        saveCurrentConversationId(mostRecent.id);
+        return mostRecent;
+      }
     }
     
-    const newConversation: Conversation = {
-      id: uuidv4(),
-      title: 'New Conversation',
-      messages: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    // Set lock flag
+    createOperationInProgress = true;
     
-    conversations.push(newConversation);
-    saveConversations(conversations);
-    saveCurrentConversationId(newConversation.id);
+    // Set timeout to reset lock in case of errors (safety mechanism)
+    createOperationTimeoutId = setTimeout(clearCreateOperationLock, 5000);
     
-    return newConversation;
+    try {
+      const conversations = getConversations();
+      
+      // Check if maximum limit reached
+      if (conversations.length >= MAX_CONVERSATIONS) {
+        throw new Error(`Maximum limit of ${MAX_CONVERSATIONS} conversations reached. Please delete some conversations.`);
+      }
+      
+      // Check if we created a conversation recently (within the last 2 seconds)
+      const lastCreationTime = localStorage.getItem(STORAGE_KEYS.LAST_CREATION_TIME);
+      const currentTime = Date.now();
+      if (lastCreationTime && (currentTime - parseInt(lastCreationTime)) < 2000) {
+        console.log("Preventing duplicate conversation creation - too soon after last creation");
+        
+        // Return the most recent conversation instead
+        const mostRecent = conversations.sort((a, b) => 
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        )[0];
+        
+        if (mostRecent) {
+          saveCurrentConversationId(mostRecent.id);
+          return mostRecent;
+        }
+      }
+      
+      // Update the last creation time
+      localStorage.setItem(STORAGE_KEYS.LAST_CREATION_TIME, currentTime.toString());
+      
+      const newConversation: Conversation = {
+        id: uuidv4(),
+        title: 'New Conversation',
+        messages: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      conversations.push(newConversation);
+      saveConversations(conversations);
+      saveCurrentConversationId(newConversation.id);
+      
+      // Dispatch event for new conversation
+      dispatchConversationChangeEvent('create', newConversation.id);
+      
+      return newConversation;
+    } finally {
+      // Clear the lock
+      clearCreateOperationLock();
+    }
   },
   
   // Update a conversation
@@ -168,6 +237,18 @@ export const conversationService = {
     saveConversations(conversations);
     
     return updatedConversation;
+  },
+  
+  // Rename a conversation
+  renameConversation: (id: string, newTitle: string): Conversation => {
+    const conversation = conversationService.getById(id);
+    
+    if (!conversation) {
+      throw new Error(`Conversation with ID ${id} not found.`);
+    }
+    
+    conversation.title = newTitle;
+    return conversationService.update(conversation);
   },
   
   // Add a message to a conversation
@@ -210,26 +291,54 @@ export const conversationService = {
     }
     
     saveCurrentConversationId(id);
+    
+    // Dispatch event for current conversation change
+    dispatchConversationChangeEvent('switch', id);
+    
     return conversation;
   },
   
   // Ensure a current conversation exists
   ensureCurrentConversation: (): Conversation => {
-    const current = conversationService.getCurrentConversation();
-    
-    if (current) {
-      return current;
+    // First check if there's a current conversation already set
+    const currentId = getCurrentConversationId();
+    if (currentId) {
+      const current = conversationService.getById(currentId);
+      if (current) {
+        console.log("Using existing current conversation:", current.id);
+        return current;
+      }
     }
     
-    // Try to get the most recent conversation
-    const conversations = conversationService.getAll();
-    if (conversations.length > 0) {
-      const mostRecent = conversations[0]; // Already sorted by updatedAt
+    // Check if we're at the maximum conversation limit
+    const conversations = getConversations();
+    if (conversations.length >= MAX_CONVERSATIONS) {
+      // If at max limit, use the most recent conversation
+      const mostRecent = conversations.sort((a, b) => 
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      )[0];
       saveCurrentConversationId(mostRecent.id);
       return mostRecent;
     }
     
-    // No conversations exist, create a new one
+    // Check if we created a conversation recently (within the last 2 seconds)
+    const lastCreationTime = localStorage.getItem(STORAGE_KEYS.LAST_CREATION_TIME);
+    const currentTime = Date.now();
+    if (lastCreationTime && (currentTime - parseInt(lastCreationTime)) < 2000) {
+      console.log("Preventing duplicate conversation creation - using most recent instead");
+      
+      // Use the most recent conversation instead of creating a new one
+      if (conversations.length > 0) {
+        const mostRecent = conversations.sort((a, b) => 
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        )[0];
+        saveCurrentConversationId(mostRecent.id);
+        return mostRecent;
+      }
+    }
+    
+    // Create a new conversation for a fresh start
+    console.log("Creating new conversation in ensureCurrentConversation");
     return conversationService.create();
   }
 };
