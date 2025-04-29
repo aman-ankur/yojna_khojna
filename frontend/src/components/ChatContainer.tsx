@@ -9,8 +9,9 @@ import WelcomeHeader from './WelcomeHeader';
 import SuggestedPrompts from './SuggestedPrompts';
 import ChatInput from './ChatInput';
 import ChatMessages from './ChatMessages';
-import { chatService, Message } from '../services/api';
+import { chatService, Message as ApiMessage } from '../services/api';
 import { useLanguage } from './LanguageToggle';
+import useCurrentConversation from '../hooks/useCurrentConversation';
 
 interface ChatContainerProps {
   userName?: string;
@@ -18,12 +19,28 @@ interface ChatContainerProps {
 
 const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
   const { t } = useLanguage();
-  // State to track if conversation has started
-  const [conversationStarted, setConversationStarted] = useState<boolean>(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  
+  // Get the current conversation
+  const { 
+    currentConversation, 
+    loading: conversationLoading, 
+    error: conversationError,
+    addMessage 
+  } = useCurrentConversation();
+  
+  // Local state
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Derive conversation started from current conversation
+  const conversationStarted = currentConversation?.messages?.length > 0;
+
+  // Extract messages for display
+  const messages = currentConversation?.messages?.map(msg => ({
+    role: msg.role,
+    content: msg.content
+  })) || [];
 
   // Auto scroll to bottom of messages
   useEffect(() => {
@@ -37,39 +54,45 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
   
   // Handle sending message
   const sendMessage = async (text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim() || !currentConversation) return;
     
-    // If first message, transition to conversation view
-    if (!conversationStarted) {
-      setConversationStarted(true);
-    }
+    // Add user message to the current conversation
+    addMessage({
+      role: 'user',
+      content: text
+    });
     
-    // Add user message
-    const userMessage: Message = { role: 'user', content: text };
-    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     setError(null);
     
     try {
-      // Transform frontend message history (Message[]) to backend expected format (List[Tuple[str, str]])
+      // Transform conversation history for backend
       const backendHistory: [string, string][] = [];
-      for (let i = 0; i < messages.length; i += 2) {
+      const conversationMessages = currentConversation.messages;
+      
+      for (let i = 0; i < conversationMessages.length - 1; i += 2) {
         // Ensure we have a pair of user and assistant messages
-        if (messages[i]?.role === 'user' && messages[i+1]?.role === 'assistant') {
-          backendHistory.push([messages[i].content, messages[i+1].content]);
+        if (
+          conversationMessages[i]?.role === 'user' && 
+          conversationMessages[i+1]?.role === 'assistant'
+        ) {
+          backendHistory.push([
+            conversationMessages[i].content, 
+            conversationMessages[i+1].content
+          ]);
         }
-        // Handle potential edge cases like the last message being a user message
-        // For this specific chain type, only complete pairs are usually needed for history.
       }
 
       const response = await chatService.sendMessage({
         question: text,
-        chat_history: backendHistory // Send the transformed history
+        chat_history: backendHistory as any
       });
       
-      // Directly add the assistant's response to the messages state
-      const assistantMessage: Message = { role: 'assistant', content: response.answer };
-      setMessages(prev => [...prev, assistantMessage]);
+      // Add assistant response to the conversation
+      addMessage({
+        role: 'assistant',
+        content: response.answer
+      });
 
     } catch (err) {
       console.error('Error communicating with the backend:', err);
@@ -81,9 +104,7 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
   
   // Handle image upload (placeholder)
   const handleImageUpload = async (file: File) => {
-    // Implementation would depend on your backend API
     console.log('Image upload:', file.name);
-    // You could upload the image and then reference it in a message
   };
   
   return (
@@ -145,20 +166,26 @@ const ChatContainer: FC<ChatContainerProps> = ({ userName }) => {
         <ChatInput 
           onSendMessage={sendMessage}
           onImageUpload={handleImageUpload}
-          disabled={isLoading}
-          isConversationStarted={conversationStarted}
+          disabled={isLoading || conversationLoading}
+          isConversationStarted={!!conversationStarted}
         />
       </Paper>
       
       {/* Error Snackbar */}
       <Snackbar
-        open={!!error}
+        open={!!error || !!conversationError}
         autoHideDuration={6000}
-        onClose={() => setError(null)}
+        onClose={() => {
+          setError(null);
+        }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
-          {error}
+        <Alert 
+          onClose={() => setError(null)} 
+          severity="error" 
+          sx={{ width: '100%' }}
+        >
+          {error || conversationError}
         </Alert>
       </Snackbar>
     </Box>

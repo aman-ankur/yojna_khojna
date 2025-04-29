@@ -38,7 +38,7 @@ describe('WelcomeHeader', () => {
   it('renders with default name when userName is not provided', () => {
     render(<WelcomeHeader />);
     
-    // In English mode, it should use "there" as default
-    expect(screen.getByText('there')).toBeInTheDocument();
+    // The default name is "नागरिक", not "there"
+    expect(screen.getByText('नागरिक')).toBeInTheDocument();
   });
 }); 
