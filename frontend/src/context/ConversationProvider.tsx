@@ -11,6 +11,7 @@ interface ConversationContextType {
   conversationsError: string | null;
   createConversation: () => Conversation | null;
   deleteConversation: (id: string) => void;
+  renameConversation: (id: string, newTitle: string) => void;
   refreshConversations: () => void;
   
   // Current conversation
@@ -30,6 +31,7 @@ const ConversationContext = createContext<ConversationContextType>({
   conversationsError: null,
   createConversation: () => null,
   deleteConversation: () => {},
+  renameConversation: () => {},
   refreshConversations: () => {},
   
   currentConversation: null,
@@ -54,6 +56,7 @@ const ConversationProvider: FC<ConversationProviderProps> = ({ children }) => {
     error: conversationsError,
     createConversation,
     deleteConversation,
+    renameConversation,
     refreshConversations
   } = useConversations();
   
@@ -75,6 +78,7 @@ const ConversationProvider: FC<ConversationProviderProps> = ({ children }) => {
     conversationsError,
     createConversation,
     deleteConversation,
+    renameConversation,
     refreshConversations,
     
     // Current conversation

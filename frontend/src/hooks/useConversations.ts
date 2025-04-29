@@ -54,6 +54,18 @@ export const useConversations = () => {
     }
   }, [loadConversations]);
 
+  // Rename a conversation
+  const renameConversation = useCallback((id: string, newTitle: string) => {
+    try {
+      conversationService.renameConversation(id, newTitle);
+      // Update state with the renamed conversation
+      loadConversations();
+    } catch (err) {
+      console.error('Error renaming conversation:', err);
+      setError('Failed to rename conversation');
+    }
+  }, [loadConversations]);
+
   // Initialize on mount
   useEffect(() => {
     loadConversations();
@@ -65,6 +77,7 @@ export const useConversations = () => {
     error,
     createConversation,
     deleteConversation,
+    renameConversation,
     refreshConversations: loadConversations
   };
 };

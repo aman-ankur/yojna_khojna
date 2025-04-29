@@ -46,13 +46,16 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
     conversations, 
     loading: conversationsLoading, 
     createConversation, 
-    deleteConversation 
+    deleteConversation,
+    renameConversation,
+    refreshConversations
   } = useConversations();
   
   const { 
     currentConversation, 
     switchConversation,
-    createNewConversation 
+    createNewConversation,
+    refreshCurrentConversation
   } = useCurrentConversation();
   
   // Handlers
@@ -65,14 +68,23 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
   };
   
   const handleNewConversation = () => {
+    console.log("New conversation button clicked"); // Debug log
+    
+    // Get the current conversation ID for comparison
+    const previousConvId = currentConversation?.id;
+    console.log("Previous conversation ID:", previousConvId);
+    
+    // Create the new conversation - this is all we need
+    // It will automatically update the current conversation
+    const newConv = createNewConversation();
+    console.log("Created new conversation:", newConv); // Debug log
+    
     if (isMobile) {
-      // Create and close sidebar on mobile
-      createNewConversation();
+      // Close sidebar on mobile
       setExpanded(false);
-    } else {
-      // Just create on desktop
-      createNewConversation();
     }
+    
+    // No need for additional refreshes - the event system will handle it
   };
   
   const handleSelectConversation = (id: string) => {
@@ -122,7 +134,13 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
           
           {/* Quick actions */}
           <Tooltip title={t.newConversation} placement="right">
-            <IconButton onClick={handleNewConversation} data-testid="new-chat-button">
+            <IconButton 
+              onClick={(e) => {
+                console.log("Sidebar add button clicked");
+                handleNewConversation();
+              }} 
+              data-testid="new-chat-button"
+            >
               <AddIcon />
             </IconButton>
           </Tooltip>
@@ -201,6 +219,7 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
             loading={conversationsLoading}
             onSelectConversation={handleSelectConversation}
             onDeleteConversation={deleteConversation}
+            onRenameConversation={renameConversation}
             onNewConversation={handleNewConversation}
           />
         </Drawer>
@@ -263,6 +282,7 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
             loading={conversationsLoading}
             onSelectConversation={handleSelectConversation}
             onDeleteConversation={deleteConversation}
+            onRenameConversation={renameConversation}
             onNewConversation={handleNewConversation}
           />
         </Box>
