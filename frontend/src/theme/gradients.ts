@@ -1,8 +1,9 @@
 import { alpha } from '@mui/material/styles';
 
-// Define base color constants
-const DEEP_PURPLE = '#4A55A2';
-const BLUE = '#7895CB';
+// Define base color constants - Updated to match "नागरिक" purple branding with a muted, elegant tone
+const DEEP_PURPLE = '#635089'; // Muted, darker purple
+const LIGHTER_PURPLE = '#8A7AAD'; // Softer lavender shade
+const ACCENT_PURPLE = '#6F5F9E'; // Slightly deeper for active states
 
 // Define gradient types
 export interface GradientOptions {
@@ -26,23 +27,25 @@ export const createGradient = (options: GradientOptions): string => {
   return `linear-gradient(${direction}, ${gradientColors.join(', ')})`;
 };
 
-// Pre-defined gradients for the sidebar
+// Pre-defined gradients for the sidebar - Updated with new muted purple palette
 export const sidebarGradients = {
-  // Default state gradient (deep purple to blue)
+  // Default state gradient (muted purple to softer lavender)
   default: createGradient({
-    colors: [DEEP_PURPLE, BLUE],
-    direction: 'to right'
+    colors: [DEEP_PURPLE, LIGHTER_PURPLE],
+    direction: 'to right',
+    opacity: 0.95 // Slightly reduced opacity for subtlety
   }),
   
-  // Active state gradient (slightly brighter)
+  // Active state gradient (slightly deeper with more contrast)
   active: createGradient({
-    colors: [alpha(DEEP_PURPLE, 0.9), alpha(BLUE, 0.9)],
-    direction: 'to right'
+    colors: [ACCENT_PURPLE, LIGHTER_PURPLE],
+    direction: 'to right',
+    opacity: 0.97 // Higher opacity for active state
   }),
   
-  // Hover state gradient
+  // Hover state gradient (subtle depth change)
   hover: createGradient({
-    colors: [alpha(DEEP_PURPLE, 0.8), alpha(BLUE, 0.8)],
+    colors: [DEEP_PURPLE, alpha(LIGHTER_PURPLE, 0.85)],
     direction: 'to right'
   }),
 };
@@ -59,15 +62,15 @@ export const createGradientStyles = (variant: 'default' | 'active' | 'hover' = '
   if (variant === 'hover') {
     return {
       ...baseStyles,
-      boxShadow: `0 4px 12px ${alpha(DEEP_PURPLE, 0.4)}`,
+      boxShadow: `0 2px 8px ${alpha(DEEP_PURPLE, 0.3)}`, // More subtle shadow
     };
   }
   
   if (variant === 'active') {
     return {
       ...baseStyles,
-      boxShadow: `0 4px 20px ${alpha(DEEP_PURPLE, 0.5)}`,
-      borderLeft: `3px solid ${alpha(BLUE, 0.9)}`,
+      boxShadow: `0 2px 10px ${alpha(ACCENT_PURPLE, 0.4)}`, // Reduced shadow intensity
+      borderLeft: `2px solid ${LIGHTER_PURPLE}`, // Thinner border
     };
   }
   
@@ -77,5 +80,6 @@ export const createGradientStyles = (variant: 'default' | 'active' | 'hover' = '
 // Export color constants for reuse
 export const gradientColors = {
   DEEP_PURPLE,
-  BLUE,
+  ACCENT_PURPLE,
+  LIGHTER_PURPLE
 }; 

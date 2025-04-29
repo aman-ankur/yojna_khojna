@@ -125,11 +125,11 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
     color: '#fff',
     '&:hover': {
       background: sidebarGradients.hover,
-      boxShadow: `0 4px 12px ${alpha(gradientColors.DEEP_PURPLE, 0.4)}`,
+      boxShadow: `0 2px 8px ${alpha(gradientColors.DEEP_PURPLE, 0.3)}`,
     },
     '&.active': {
       background: sidebarGradients.active,
-      boxShadow: `0 4px 20px ${alpha(gradientColors.DEEP_PURPLE, 0.5)}`,
+      boxShadow: `0 2px 10px ${alpha(gradientColors.ACCENT_PURPLE, 0.4)}`,
     }
   };
   
@@ -192,7 +192,7 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
                 ...gradientButtonStyle,
                 ...(isPathActive('/chat') && { 
                   background: sidebarGradients.active,
-                  boxShadow: `0 4px 20px ${alpha(gradientColors.DEEP_PURPLE, 0.5)}`,
+                  boxShadow: `0 2px 10px ${alpha(gradientColors.ACCENT_PURPLE, 0.4)}`,
                 })
               }}
             >
@@ -207,7 +207,7 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
                 ...gradientButtonStyle,
                 ...(isPathActive('/chat') && { 
                   background: sidebarGradients.active,
-                  boxShadow: `0 4px 20px ${alpha(gradientColors.DEEP_PURPLE, 0.5)}`,
+                  boxShadow: `0 2px 10px ${alpha(gradientColors.ACCENT_PURPLE, 0.4)}`,
                 })
               }}
             >
@@ -222,7 +222,7 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
                 ...gradientButtonStyle,
                 ...(isPathActive('/discover') && { 
                   background: sidebarGradients.active,
-                  boxShadow: `0 4px 20px ${alpha(gradientColors.DEEP_PURPLE, 0.5)}`,
+                  boxShadow: `0 2px 10px ${alpha(gradientColors.ACCENT_PURPLE, 0.4)}`,
                 })
               }}
             >
@@ -237,7 +237,7 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
                 ...gradientButtonStyle,
                 ...(isPathActive('/') && { 
                   background: sidebarGradients.active,
-                  boxShadow: `0 4px 20px ${alpha(gradientColors.DEEP_PURPLE, 0.5)}`,
+                  boxShadow: `0 2px 10px ${alpha(gradientColors.ACCENT_PURPLE, 0.4)}`,
                 })
               }}
             >

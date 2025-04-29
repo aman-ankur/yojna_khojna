@@ -160,19 +160,19 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
           color: isActive ? '#fff' : 'inherit',
           transition: 'all 0.2s ease-in-out',
           boxShadow: isActive ? 
-            `0 4px 8px ${alpha(gradientColors.DEEP_PURPLE, 0.3)}` : 
+            `0 2px 8px ${alpha(gradientColors.DEEP_PURPLE, 0.25)}` : 
             'none',
           borderLeft: isActive ? 
-            `3px solid ${gradientColors.BLUE}` : 
-            isPinned ? `3px solid ${alpha(gradientColors.DEEP_PURPLE, 0.4)}` :
-            '3px solid transparent',
+            `2px solid ${gradientColors.LIGHTER_PURPLE}` : 
+            isPinned ? `1px solid ${alpha(gradientColors.DEEP_PURPLE, 0.3)}` :
+            '1px solid transparent',
           '&:hover': {
             backgroundColor: !isActive && !isEditing ? 
-              alpha(gradientColors.DEEP_PURPLE, 0.1) : 
+              alpha(gradientColors.DEEP_PURPLE, 0.08) : 
               isActive ? sidebarGradients.active : 'transparent',
             boxShadow: !isActive && !isEditing ? 
-              `0 2px 6px ${alpha(gradientColors.DEEP_PURPLE, 0.2)}` :
-              isActive ? `0 4px 8px ${alpha(gradientColors.DEEP_PURPLE, 0.3)}` : 
+              `0 1px 3px ${alpha(gradientColors.DEEP_PURPLE, 0.15)}` :
+              isActive ? `0 2px 8px ${alpha(gradientColors.DEEP_PURPLE, 0.25)}` : 
               'none',
           }
         }}
@@ -220,7 +220,7 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
                     fontSize="small" 
                     sx={{ 
                       mr: 0.5, 
-                      color: isActive ? '#fff' : alpha(gradientColors.DEEP_PURPLE, 0.7),
+                      color: isActive ? '#fff' : alpha(gradientColors.ACCENT_PURPLE, 0.7),
                       transform: 'rotate(45deg)',
                       fontSize: '0.9rem' 
                     }} 
@@ -302,7 +302,7 @@ const ConversationListItem: FC<ConversationListItemProps> = ({
                           '#fff' : 
                           pinLimitReached ? 
                             'text.secondary' : 
-                            gradientColors.DEEP_PURPLE,
+                            gradientColors.ACCENT_PURPLE,
                       }
                     }}
                   >

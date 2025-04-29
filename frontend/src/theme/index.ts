@@ -5,10 +5,10 @@ import { gradientColors } from './gradients';
 const themeOptions: ThemeOptions = {
   palette: {
     primary: {
-      main: gradientColors.DEEP_PURPLE, // Update to use our gradient color
+      main: gradientColors.DEEP_PURPLE, // Updated to use our muted purple color
     },
     secondary: {
-      main: gradientColors.BLUE, // Update to use our gradient color
+      main: gradientColors.LIGHTER_PURPLE, // Updated to use the softer lavender shade
     },
     background: {
       default: '#FFFFFF', // White background
@@ -106,6 +106,21 @@ const themeOptions: ThemeOptions = {
           backgroundColor: 'rgba(0, 0, 0, 0.85)',
           padding: '8px 12px',
           fontSize: '0.8rem',
+        }
+      }
+    },
+    // Update chip styling for category filters
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          '&.MuiChip-filled': {
+            backgroundColor: gradientColors.DEEP_PURPLE,
+            color: '#fff',
+          },
+          '&.MuiChip-outlined': {
+            borderColor: `rgba(${parseInt(gradientColors.DEEP_PURPLE.slice(1, 3), 16)}, ${parseInt(gradientColors.DEEP_PURPLE.slice(3, 5), 16)}, ${parseInt(gradientColors.DEEP_PURPLE.slice(5, 7), 16)}, 0.5)`,
+            color: gradientColors.DEEP_PURPLE,
+          }
         }
       }
     }

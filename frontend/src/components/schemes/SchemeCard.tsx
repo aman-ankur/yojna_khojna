@@ -25,15 +25,15 @@ const SchemeCard: React.FC<SchemeCardProps> = ({ scheme, onClick }) => {
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 2,
-        boxShadow: 2,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         overflow: 'hidden',
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: 4,
+          transform: 'translateY(-3px)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
         },
         backgroundColor: bgColor,
-        border: `1px solid ${alpha(mainColor, 0.3)}`
+        border: `1px solid ${alpha(mainColor, 0.2)}`
       }}
     >
       <CardActionArea 
@@ -49,8 +49,8 @@ const SchemeCard: React.FC<SchemeCardProps> = ({ scheme, onClick }) => {
         <Box 
           sx={{ 
             width: '100%', 
-            height: '8px', 
-            background: `linear-gradient(90deg, ${mainColor} 0%, ${alpha(mainColor, 0.7)} 100%)` 
+            height: '6px', 
+            background: `linear-gradient(90deg, ${mainColor} 0%, ${alpha(mainColor, 0.6)} 100%)` 
           }} 
         />
         <CardContent sx={{ width: '100%', flexGrow: 1, p: 2 }}>
@@ -59,7 +59,7 @@ const SchemeCard: React.FC<SchemeCardProps> = ({ scheme, onClick }) => {
             size="small" 
             sx={{ 
               mb: 1.5, 
-              backgroundColor: alpha(mainColor, 0.12),
+              backgroundColor: alpha(mainColor, 0.08),
               color: mainColor,
               fontWeight: 500,
               borderRadius: 1
