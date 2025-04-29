@@ -102,6 +102,31 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
     // No need for additional refreshes - the event system will handle it
   };
   
+  // Find or create a new conversation
+  const findOrCreateNewConversation = () => {
+    // Check if there's an existing empty conversation
+    const emptyConversation = conversations.find(
+      (c) => c.messages.length === 0 || (c.messages.length === 1 && c.messages[0].content === '')
+    );
+    
+    if (emptyConversation) {
+      // Use the existing empty conversation
+      console.log("Using existing empty conversation:", emptyConversation.id);
+      switchConversation(emptyConversation.id);
+    } else {
+      // Create a new conversation
+      console.log("No empty conversation found, creating new one");
+      createNewConversation();
+    }
+    
+    // Navigate to chat page
+    navigate('/chat');
+    
+    if (isMobile) {
+      setExpanded(false);
+    }
+  };
+  
   const handleSelectConversation = (id: string) => {
     switchConversation(id);
     // Navigate to chat page when selecting a conversation
@@ -116,6 +141,14 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
     if (isMobile) {
       setExpanded(false);
     }
+  };
+  
+  // Additional handler for opening conversations sidebar
+  const handleOpenConversationsList = () => {
+    // Navigate to chat page
+    navigate('/chat');
+    // Expand the sidebar to show conversations
+    setExpanded(true);
   };
   
   // Gradient styles for buttons
@@ -202,7 +235,7 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
           
           <Tooltip title={t.conversations} placement="right">
             <IconButton 
-              onClick={() => handleNavigate('/chat')}
+              onClick={handleOpenConversationsList}
               sx={{
                 ...gradientButtonStyle,
                 ...(isPathActive('/chat') && { 
@@ -232,7 +265,7 @@ const Sidebar: FC<SidebarProps> = ({ sx = {} }) => {
           
           <Tooltip title={t.home} placement="right">
             <IconButton
-              onClick={() => handleNavigate('/')}
+              onClick={findOrCreateNewConversation}
               sx={{
                 ...gradientButtonStyle,
                 ...(isPathActive('/') && { 
