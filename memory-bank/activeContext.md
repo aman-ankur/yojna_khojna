@@ -6,10 +6,14 @@ The Yojna Khojna project is a RAG-based government scheme assistant for low-lite
 
 ### Completed Components
 
-1. **Core Data Pipeline**: PDF extraction, embedding generation, Weaviate storage
+1. **Core Data Pipeline**:
+    - PDF extraction (including table detection/marking)
+    - **Semantic Document Chunking**: Implemented strategy to preserve tables and split along section boundaries (`document_chunker.py`).
+    - Embedding generation
+    - Weaviate storage
 2. **Basic RAG Backend**: Initial version with LangChain and Claude integration
 3. **Frontend Interface**: React-based chat UI with bilingual support
-4. **Enhanced RAG Pipeline**: 
+4. **Enhanced RAG Pipeline**:
    - New prompts for better reformulation and practical answers
    - Domain-specific entity extraction with multilingual support
    - Enhanced retrieval with follow-up queries

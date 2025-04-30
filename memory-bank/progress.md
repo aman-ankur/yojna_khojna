@@ -23,11 +23,15 @@
     *   Created `docker-compose.yml` for Weaviate.
     *   Ensured Weaviate container runs successfully.
     *   Added `weaviate-client` to `requirements.txt`.
-*   [x] **1.5: Implement Document Chunking (using LangChain):**
-    *   Created `document_chunker.py` using `langchain.text_splitter.RecursiveCharacterTextSplitter`.
+*   [x] **1.5: Implement Semantic Document Chunking:**
+    *   Created `document_chunker.py` with custom pre/post-processing logic.
+    *   Uses `langchain.text_splitter.RecursiveCharacterTextSplitter` internally.
+    *   Pre-processing replaces tables with placeholders and inserts section break markers.
+    *   Splitter prioritizes section markers, then paragraphs, etc.
+    *   Post-processing restores tables and removes markers.
     *   Defined `DocumentChunk` schema in `schemas.py`.
     *   Created `main_pipeline.py` to orchestrate extraction and chunking.
-    *   Tested chunking logic and pipeline integration.
+    *   Added comprehensive tests (`test_document_chunker.py`) for semantic logic.
 *   [x] **1.6: Embedding Generation:**
     *   Choose an embedding model (e.g., Sentence Transformers, OpenAI API).
     *   Implement function in `embedding_generator.py` to generate vector embeddings for `DocumentChunk` text.

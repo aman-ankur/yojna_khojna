@@ -17,25 +17,25 @@ cd "$(dirname "$0")"
 echo -e "${YELLOW}Running tests from $(pwd)${NC}"
 
 # Check for Python environment
-if [ -d "venv" ] || [ -d "../venv" ]; then
-  echo -e "${GREEN}✓ Python virtual environment found${NC}"
-else
-  echo -e "${YELLOW}⚠ No virtual environment found. Creating one...${NC}"
-  python -m venv venv
-  echo -e "${GREEN}✓ Created virtual environment${NC}"
-  source venv/bin/activate
-  pip install -r requirements.txt
-fi
+# if [ -d "venv" ] || [ -d "../venv" ]; then
+#   echo -e "${GREEN}✓ Python virtual environment found${NC}"
+# else
+#   echo -e "${YELLOW}⚠ No virtual environment found. Creating one...${NC}"
+#   python -m venv venv
+#   echo -e "${GREEN}✓ Created virtual environment${NC}"
+#   source venv/bin/activate
+#   pip install -r requirements.txt
+# fi
 
 # Activate virtual environment if not already activated
-if [ -z "$VIRTUAL_ENV" ]; then
-  if [ -d "venv" ]; then
-    source venv/bin/activate
-  elif [ -d "../venv" ]; then
-    source ../venv/bin/activate
-  fi
-  echo -e "${GREEN}✓ Activated virtual environment${NC}"
-fi
+# if [ -z "$VIRTUAL_ENV" ]; then
+#   if [ -d "venv" ]; then
+#     source venv/bin/activate
+#   elif [ -d "../venv" ]; then
+#     source ../venv/bin/activate
+#   fi
+#   echo -e "${GREEN}✓ Activated virtual environment${NC}"
+# fi
 
 # Verify spaCy models
 echo -e "\n${BLUE}Verifying spaCy models...${NC}"
@@ -46,12 +46,16 @@ else
 fi
 
 # Run the unit tests first
-echo -e "\n${BLUE}Running unit tests...${NC}"
+echo -e "\n${BLUE}Running core unit tests...${NC}"
 python -m pytest tests/rag/test_chain.py tests/main/test_format_response.py -v
 
 # Run the integration tests
 echo -e "\n${BLUE}Running integration tests...${NC}"
 python -m pytest tests/rag/test_enhanced_retrieval.py tests/integration/test_main_chat.py -v
+
+# Run data pipeline tests
+echo -e "\n${BLUE}Running data pipeline tests...${NC}"
+python -m pytest tests/data_pipeline/test_pdf_extractor.py tests/data_pipeline/test_document_chunker.py tests/data_pipeline/test_embedding_generator.py -v
 
 # Run a comprehensive test of the entity extraction functionality
 echo -e "\n${BLUE}Testing entity extraction...${NC}"
