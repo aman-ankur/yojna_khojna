@@ -105,14 +105,14 @@ This document outlines the specific technologies and tools proposed for the Proo
         * Procedural terms
     *   **Multi-Strategy Extraction:**
         * Standard NER for recognizing general entities (ORG, PERSON, GPE, LOC)
-        * Regular expression pattern matching for scheme names, monetary amounts
+        * **Enhanced Regular Expression Patterns:** Specific patterns for scheme names, monetary amounts (including Hindi terms like लाख, करोड़), percentages, and installment details (किस्त/किश्त).
         * Dictionary lookup for domain-specific terminology
         * Bilingual term matching that pairs Hindi/English equivalents
     *   **Entity Prioritization:** Scoring algorithm to rank extracted entities based on:
         * Presence in original query (highest priority)
-        * Entity type (schemes and monetary amounts get higher priority)
+        * **Entity Type:** Financial entities (amounts, percentages, installments) and scheme names receive the highest priority scores.
         * Relevance to eligibility, application process, documents
-    *   **Graceful Degradation:** Robust fallback to regex-based extraction when spaCy is unavailable
+    *   **Graceful Degradation:** Robust fallback to regex-based extraction (including financial patterns) when spaCy is unavailable
     *   **Contextual Follow-Up Queries:** Context-aware query generation based on entity type:
         * Scheme-specific queries focus on eligibility and benefits
         * Financial queries focus on amounts and processes
