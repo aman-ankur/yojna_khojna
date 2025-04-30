@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# This script runs the tests with the correct Python path settings
+# This script runs all tests with the correct Python path settings
+# For selective test runs, use backend/run_tests.sh instead
 
 # Change to the project root directory (where this script is located)
 cd "$(dirname "$0")"
