@@ -32,10 +32,10 @@ def get_chat_model() -> ChatAnthropic:
     # and other parameters like temperature, max_tokens, timeout as needed.
     # Refer to anthropic_claude_best_practices.md for guidance.
     model = ChatAnthropic(
-        model="claude-3-haiku-20240307", # Using Haiku for speed/cost initially
+        model="claude-3-5-sonnet-20241022", # Upgrading from Haiku to 3.5 Sonnet for better quality
         anthropic_api_key=api_key,
-        temperature=0.2, # Lower temperature for more focused RAG answers
-        max_tokens=1024, # Set a reasonable max token limit
-        timeout=60.0, # Set a timeout
+        temperature=0.1, # Lower temperature for more focused and consistent RAG answers
+        max_tokens=4096, # Increased max tokens to handle longer responses, especially in Hindi
+        timeout=90.0, # Increased timeout for longer responses
     )
     return model 

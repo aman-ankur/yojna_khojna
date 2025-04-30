@@ -366,9 +366,9 @@ def create_conversational_rag_chain():
     # This prompt helps the LLM understand the flow of conversation.
     CONTEXTUALIZE_Q_SYSTEM_PROMPT = """# Yojna Khojna Question Reformulation System
 
-You help rural and underserved Indian citizens by reformulating their questions for better document retrieval. Many users have limited education and are seeking help with government schemes.
+You help rural and underserved Indian citizens from Jharkhand by reformulating their questions for better document retrieval. Many users have limited education and are seeking help with government schemes.
 
-Given the chat history and the latest question:
+Given the chat history and latest question:
 1. Create a STANDALONE QUERY that retrieval systems can effectively use
 2. INCLUDE BOTH Hindi and English terms for key concepts (vajrapat/lightning strike, prakritik aapda/natural calamity)
 3. EXPAND the query to capture the likely UNDERLYING NEED for practical assistance
@@ -401,50 +401,113 @@ Reformulated Question:"""
 
     # --- Answering Prompt (using retrieved context) ---
     # This prompt guides the LLM to answer based *only* on the provided context.
-    QA_SYSTEM_PROMPT = """# Yojna Khojna Government Scheme Assistant
+    QA_SYSTEM_PROMPT = """# Yojna Khojna: Government Scheme Assistant
 
-You are helping rural and underserved Indian citizens access government welfare schemes. Your users often have limited education, may be in distress, and don't know where to go for help. They need extremely clear guidance based EXCLUSIVELY on official documents.
+You help rural citizens from Jharkhand access government welfare schemes. These users:
+    - Speak simple, everyday Hindi (not formal/pure Hindi)
+    - May not clearly articulate what help they need
+    - Are often in distress situations (disaster, poverty, loss)
+    - Need practical guidance more than technical policy details
+    - Don't know which government office to approach or what documents they need.
 
-## MANDATORY RESPONSE GUIDELINES:
+## DOCUMENT ANALYSIS PROTOCOL:
 
-1. USE SIMPLE LANGUAGE that someone with basic education can understand
-   - Avoid complex terms
-   - Explain any necessary government terminology in simple words
-   - Use short, clear sentences
+1. EXAMINE ALL CHUNKS THOROUGHLY before answering
+   - Important information may be scattered across different sections and pages
+   - Search for both Hindi and English terminology for key concepts
+   - Pay special attention to tables, numbered sections, and procedural details
+   - Cross-reference information from different parts of documents
 
-2. ALWAYS INCLUDE:
-   - SPECIFIC AMOUNTS (exact rupee amounts when mentioned in documents)
-   - WHERE TO GO for help (specific office or person)
-   - WHAT TO BRING (only essential documents, explained simply)
-   - WHAT TO EXPECT (timeline, process in simple steps)
+## RESPONSE REQUIREMENTS:
 
-3. ADAPT YOUR STYLE to the question type:
-   - For YES/NO questions: Be brief and direct (1-2 sentences)
-   - For "WHAT TO DO" questions: Provide step-by-step practical guidance
-   - For "HOW MUCH" questions: Lead with the EXACT AMOUNT in the first sentence
+1. FINANCIAL ACCURACY IS CRITICAL
+   - State exact amounts with ₹ symbol (e.g., ₹2,00,000)
+   - Provide COMPLETE payment details when available:
+     * Total amount
+     * Number of installments 
+     * Amount or percentage per installment
+   - When percentages are given, calculate and show both percentage AND amount
+   - Verify all financial information against document text
+   - Include exact installment breakdown if specified anywhere in documents
 
-4. CONNECT INFORMATION across documents to give complete answers:
-   - If one document mentions lightning (vajrapat) as a disaster
-   - And another mentions compensation for disasters
-   - COMBINE this information without expecting the user to make the connection
+2. USE SIMPLE LANGUAGE people with basic education understand
+   - Use everyday Hindi terms: "पैसा मिलेगा" not "वित्तीय सहायता प्रदान की जाएगी"
+   - Say "BDO ऑफिस" instead of formal government terms
+   - Use short, clear sentences with simple vocabulary
+   - Explain any technical terms when necessary
 
-5. ONLY use information from the provided document chunks - NEVER add general knowledge
-   - If information is missing, clearly state what you don't know
-   - If documents contradict, mention the most citizen-favorable option
+3. STRUCTURE YOUR ANSWER clearly
+   - First line: Direct answer to their question or acknowledge situation
+   - Benefits: Explain what help they can get (with exact amounts)
+   - Payment process: Include complete installment details when available
+   - Next steps: Numbered list of where to go, what to bring, what to expect
+   - Follow-up: Ask ONE relevant question if it would help provide better guidance
 
-6. ASSUME THE REAL QUESTION is "How can I get help?" even if they only ask factual questions
-   - Behind every query is someone facing a problem
-   - Always provide practical next steps, even for simple questions
+4. CONNECT INFORMATION across different documents
+   - If one document mentions eligibility and another mentions benefits, combine this information
+   - Recognize related terms (e.g., "lightning strike" related to "natural disaster" schemes)
+   - Infer the real need behind vague questions (e.g., "मेरा घर गिर गया" → housing scheme information)
+
+5. BE HONEST about limitations
+   - If information is incomplete, clearly state what's missing
+   - If documents contradict each other, present all versions
+   - Never invent details not found in the documents
+
+## SAFETY PROTOCOL FOR FINANCIAL INFORMATION:
+
+- Double-check all financial details by locating the exact text in documents
+- For ALL payment details (total amounts, installments, percentages), review documents thoroughly
+- Include complete installment information if it exists ANYWHERE in the documents
+- If contradictions exist, acknowledge them and present all versions found
+
+## EXAMPLES OF EFFECTIVE RESPONSES:
+
+1. Question: "बारिश में खेत बर्बाद हो गया है, क्या उपाय है?"
+   Good response:
+   "आपकी फसल बारिश से बर्बाद होने पर आपको आपदा राहत के तहत मुआवजा मिल सकता है।
+
+   मुआवजे की राशि फसल के प्रकार और नुकसान के अनुसार ₹15,000 से ₹25,000 प्रति हेक्टेयर तक हो सकती है।
+
+   मुआवजा पाने के लिए:
+   1. अपने ग्राम प्रधान या कृषि विभाग के अधिकारी से संपर्क करें
+   2. नुकसान का आकलन कराएँ
+   3. आवेदन फॉर्म भरें और जमा करें
+   4. आधार कार्ड, खसरा-खतौनी और बैंक विवरण साथ लेकर जाएँ
+
+   क्या आप बता सकते हैं कि आपने किस फसल की खेती की थी?"
+
+2. Question: "बिजली गिरने से मौत होने पर कितना पैसा मिलेगा?"
+   Good response:
+   "बिजली गिरने (वज्रपात) से मृत्यु होने पर परिवार को ₹4,00,000 की आर्थिक सहायता मिलेगी।
+
+   यह राशि एकमुश्त दी जाती है और सीधे परिवार के बैंक खाते में ट्रांसफर की जाती है।
+
+   सहायता प्राप्त करने के लिए:
+   1. तहसील कार्यालय में आवेदन जमा करें
+   2. मृत्यु प्रमाण पत्र, आधार कार्ड और बैंक विवरण लेकर जाएँ
+   3. पुलिस रिपोर्ट या पोस्टमार्टम रिपोर्ट की प्रति लेकर जाएँ
+
+   आवेदन प्रक्रिया 30 दिन के भीतर पूरी कर लें।"
+
+3. Question: "ओलावृष्टि को आपदा माना जाता है की नहीं?"
+   Good response:
+   "हां, ओलावृष्टि को प्राकृतिक आपदा माना जाता है।
+
+   ओलावृष्टि से फसल को नुकसान होने पर आपको मुआवजा मिल सकता है। फसल के प्रकार और नुकसान के अनुसार प्रति हेक्टेयर ₹18,000 तक की सहायता राशि दी जाती है।
+
+   आवेदन करने के लिए:
+   1. ग्राम पंचायत या कृषि विभाग के पास रिपोर्ट दर्ज कराएँ
+   2. क्षतिग्रस्त फसल की फोटो खिंचवाएँ
+   3. आवेदन फॉर्म भरें और जमा करें
+
+   आवेदन घटना के 7 दिन के भीतर करना जरूरी है।"
 
 ## DOCUMENT CONTEXT:
 {context}
 
 ## QUESTION: {input}
 
-## ANSWER:"""
-    # NOTE: The {language} variable was removed from the prompt.
-    # We also need to pass the original {input} (user question) and {chat_history}.
-    # The QA prompt now expects {input}, {chat_history}, and {context}.
+## ANSWER (in {language}):"""
 
     qa_prompt = ChatPromptTemplate.from_messages(
         [
@@ -456,14 +519,18 @@ You are helping rural and underserved Indian citizens access government welfare 
     )
 
     # --- Document Combination Chain (Stuff Chain) ---
-    # Now needs 'input' and 'chat_history' along with 'context'
-    question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+    # Now needs 'input', 'chat_history', 'language', and 'context'
+    question_answer_chain = create_stuff_documents_chain(
+        llm, 
+        qa_prompt,
+        document_separator="\n\n"
+    )
 
     # --- Full Conversational RAG Chain with Enhanced Retrieval ---
     # 1. Prepare input for rephrasing (includes history and latest input)
     # 2. Rephrase the input question using the LLM -> reformulated_query
     # 3. Pass the reformulated_query to the enhanced_retrieval_step -> final_documents
-    # 4. Pass the final_documents and the *original* input/history to the question_answer_chain
+    # 4. Pass the final_documents, original input, history, and language to the question_answer_chain
 
     conversational_rag_chain = (
         RunnablePassthrough.assign(
@@ -474,12 +541,30 @@ You are helping rural and underserved Indian citizens access government welfare 
             # Step 3: Retrieve docs using the reformulated input
             context=RunnableLambda(lambda x: enhanced_retrieval_step({"input": x["reformulated_input"]}))
         )
-        # Step 4: Generate answer using original input, history, and retrieved context
+        # Step 4: Generate answer using original input, history, retrieved context, and language
         | question_answer_chain 
     )
 
+    # Wrap the chain with a post-processing step that ensures clean output
+    def clean_response(response):
+        """Clean up the response to remove debug info and ensure proper formatting."""
+        if isinstance(response, str):
+            # Extract only the actual answer part, removing any internal debugging info
+            # Look for section markers that might indicate debug vs. answer
+            if "## ANSWER" in response:
+                parts = response.split("## ANSWER")
+                if len(parts) > 1:
+                    return parts[1].strip()
+                
+            # If no markers, just return the response as is
+            return response
+        return response
+    
+    # Add the cleaning step to the chain
+    final_chain = conversational_rag_chain | RunnableLambda(clean_response)
+
     print("Conversational RAG chain created with history awareness AND enhanced retrieval.")
-    return conversational_rag_chain
+    return final_chain
 
 # Kept original get_rag_chain for potential compatibility, but marked as deprecated
 # or potentially to be removed later. The main usage should shift to
@@ -494,29 +579,29 @@ You are helping rural and underserved Indian citizens access government welfare 
 #     chain = create_conversational_rag_chain()
 #     chat_history = [] # Maintain history outside the function
 #     try:
-#         print("\\n--- Invoking Conversational RAG Chain ---")
+#         print("\n--- Invoking Conversational RAG Chain ---")
 #         query1 = "What is Abua Awaas Yojana?"
 #         print(f"User: {query1}")
-#         result1 = chain.invoke({"input": query1, "chat_history": chat_history})
+#         result1 = chain.invoke({"input": query1, "chat_history": chat_history, "language": "en"})
 #         print(f"AI: {result1}")
 #         chat_history.extend([HumanMessage(content=query1), AIMessage(content=result1)])
-
-#         print("\\n--- Follow-up Question ---")
+#
+#         print("\n--- Follow-up Question ---")
 #         query2 = "Who is eligible for it?"
 #         print(f"User: {query2}")
-#         result2 = chain.invoke({"input": query2, "chat_history": chat_history})
+#         result2 = chain.invoke({"input": query2, "chat_history": chat_history, "language": "en"})
 #         print(f"AI: {result2}")
 #         chat_history.extend([HumanMessage(content=query2), AIMessage(content=result2)])
-
-#         print("\\n------------------------------------\\n")
-
+#
+#         print("\n------------------------------------\n")
+#
 #     except Exception as e:
 #         print(f"Error invoking conversational RAG chain: {e}") 
 
 # Add helper functions needed for testing
 import anthropic
 
-def contextualize_q_prompt_reformulation(query: str, chat_history=None) -> str:
+def contextualize_q_prompt_reformulation(query: str, chat_history=None, language="en") -> str:
     """
     Reformulate a query based on the rephrase_chain part of our RAG pipeline.
     This is primarily used for testing purposes.
@@ -524,6 +609,7 @@ def contextualize_q_prompt_reformulation(query: str, chat_history=None) -> str:
     Args:
         query: The user's query to reformulate
         chat_history: Optional conversation history
+        language: Language of the conversation (en/hi)
         
     Returns:
         Reformulated query
@@ -534,9 +620,9 @@ def contextualize_q_prompt_reformulation(query: str, chat_history=None) -> str:
     # Define the prompt template directly here to avoid global variable reference
     system_prompt = """# Yojna Khojna Question Reformulation System
 
-You help rural and underserved Indian citizens by reformulating their questions for better document retrieval. Many users have limited education and are seeking help with government schemes.
+You help rural and underserved Indian citizens from Jharkhand by reformulating their questions for better document retrieval. Many users have limited education and are seeking help with government schemes.
 
-Given the chat history and the latest question:
+Given the chat history and latest question:
 1. Create a STANDALONE QUERY that retrieval systems can effectively use
 2. INCLUDE BOTH Hindi and English terms for key concepts (vajrapat/lightning strike, prakritik aapda/natural calamity)
 3. EXPAND the query to capture the likely UNDERLYING NEED for practical assistance
@@ -569,7 +655,7 @@ DO NOT answer the question - ONLY reformulate it for better document retrieval."
     
     return response.content[0].text
 
-def contextualize_q_prompt_standalone(query: str, retrieved_docs=None) -> str:
+def contextualize_q_prompt_standalone(query: str, retrieved_docs=None, language="en") -> str:
     """
     Create a standalone prompt for the second stage of query reformulation.
     This is primarily used for testing purposes.
@@ -577,6 +663,7 @@ def contextualize_q_prompt_standalone(query: str, retrieved_docs=None) -> str:
     Args:
         query: The user's original query
         retrieved_docs: Optional list of retrieved documents to consider
+        language: Language of the conversation (en/hi)
         
     Returns:
         Standalone query for further retrieval
@@ -591,6 +678,8 @@ Query: {query}
 
 Retrieved Documents:
 {retrieved_docs if retrieved_docs else "No documents retrieved yet."}
+
+Language: {language}
 
 Standalone Query:"""
     
@@ -642,3 +731,90 @@ def extract_key_entities_ner(text: str) -> list:
                 entities.append({"text": match.strip(), "type": "SCHEME_NAME"})
     
     return entities 
+
+# Add test function at the end of the file
+def test_conversational_rag_chain():
+    """
+    Test function to verify that the conversational RAG chain works correctly
+    with both English and Hindi queries and properly handles the language parameter.
+    
+    This is for developer testing/debugging purposes.
+    """
+    try:
+        print("\n=== Testing Conversational RAG Chain ===\n")
+        
+        # Initialize the chain
+        chain = create_conversational_rag_chain()
+        
+        # Test with English
+        test_en_query = "What is Abua Awaas Yojana?"
+        print(f"Testing English query: '{test_en_query}'")
+        
+        result_en = chain.invoke({
+            "input": test_en_query, 
+            "chat_history": [], 
+            "language": "en"
+        })
+        
+        print(f"\nEnglish result type: {type(result_en)}")
+        if isinstance(result_en, dict):
+            print(f"Keys: {list(result_en.keys())}")
+            if 'answer' in result_en:
+                print(f"Answer snippet: {result_en['answer'][:100]}...")
+            else:
+                print(f"Full result: {result_en}")
+        else:
+            print(f"String result snippet: {str(result_en)[:100]}...")
+        
+        # Test with Hindi
+        test_hi_query = "अबुआ आवास योजना क्या है?"
+        print(f"\nTesting Hindi query: '{test_hi_query}'")
+        
+        result_hi = chain.invoke({
+            "input": test_hi_query, 
+            "chat_history": [], 
+            "language": "hi"
+        })
+        
+        print(f"\nHindi result type: {type(result_hi)}")
+        if isinstance(result_hi, dict):
+            print(f"Keys: {list(result_hi.keys())}")
+            if 'answer' in result_hi:
+                print(f"Answer snippet: {result_hi['answer'][:100]}...")
+            else:
+                print(f"Full result: {result_hi}")
+        else:
+            print(f"String result snippet: {str(result_hi)[:100]}...")
+            
+        # Test with financial information query in Hindi
+        test_financial_query = "अबुआ आवास योजना में कितना पैसा मिलेगा और कितनी किश्तों में मिलेगा?"
+        print(f"\nTesting financial information query: '{test_financial_query}'")
+        
+        result_financial = chain.invoke({
+            "input": test_financial_query, 
+            "chat_history": [], 
+            "language": "hi"
+        })
+        
+        print(f"\nFinancial query result type: {type(result_financial)}")
+        if isinstance(result_financial, dict):
+            print(f"Keys: {list(result_financial.keys())}")
+            if 'answer' in result_financial:
+                print(f"Answer snippet: {result_financial['answer'][:150]}...")
+            else:
+                print(f"Full result: {result_financial}")
+        else:
+            print(f"String result snippet: {str(result_financial)[:150]}...")
+        
+        print("\n=== Test Completed ===\n")
+        return True
+    
+    except Exception as e:
+        print(f"\n!!! Test Failed: {e} !!!\n")
+        import traceback
+        traceback.print_exc()
+        return False
+
+# Uncomment to run the test when this module is executed directly
+# if __name__ == "__main__":
+#     test_conversational_rag_chain() 
