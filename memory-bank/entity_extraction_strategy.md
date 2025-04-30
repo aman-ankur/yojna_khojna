@@ -31,16 +31,15 @@ Our enhanced entity extraction strategy includes:
    - Procedural terms
 
 3. **Multi-Strategy Extraction**:
-   - Standard NER from spaCy for general entities
-   - Pattern matching for scheme names and common formats
-   - Dictionary lookup for domain-specific terms
-   - Special handling for monetary amounts
-   - Bilingual equivalence matching (Hindi-English term pairs)
+   - Standard NER from spaCy for general entities (ORG, PERSON, GPE, LOC).
+   - **Enhanced Pattern Matching:** Specific regex patterns for scheme names, monetary amounts (including Hindi units like लाख, करोड़), percentages, and installment details (किस्त/किश्त).
+   - Dictionary lookup for domain-specific terms using the comprehensive `SCHEME_ENTITIES` dictionary.
+   - Bilingual equivalence matching (Hindi-English term pairs) based on the dictionary structure.
 
 4. **Entity Prioritization**:
-   - Scoring based on presence in original query
-   - Higher weights for scheme names and monetary amounts
-   - Contextual relevance to eligibility, application process, and documentation
+   - Scoring based on presence in the original query (highest weight).
+   - **Higher weights for key entity types:** Financial entities (amounts, percentages, installments) and scheme names receive significantly higher priority scores.
+   - Contextual relevance scoring based on terms related to eligibility, application process, and documentation.
 
 5. **Graceful Degradation**:
    - Fallback to regex pattern matching when spaCy is unavailable
@@ -50,9 +49,10 @@ Our enhanced entity extraction strategy includes:
 
 The extracted entities are used to build more effective follow-up queries:
 - Scheme-specific queries focus on eligibility and benefits
-- Benefit-specific queries focus on amounts and application processes
-- Beneficiary-specific queries focus on available schemes
-- Context-aware query formulation based on entity type
+- Benefit-specific queries focus on amounts and application processes.
+- Beneficiary-specific queries focus on available schemes.
+- **Financial entity queries:** Focus on the context of amounts (e.g., which scheme provides this amount), percentages (e.g., what does this percentage apply to), or installments (e.g., details of the installment schedule).
+- Context-aware query formulation based on entity type.
 
 ## Implementation
 
@@ -62,4 +62,4 @@ The implementation replaces the existing `extract_key_entities` function in `bac
 3. Prioritizes entities based on relevance to government schemes
 4. Constructs more contextual follow-up queries
 
-This enhancement significantly improves the RAG system's ability to find relevant information for users' queries about government welfare schemes, especially when user queries contain Hindi terms or domain-specific terminology. 
+This enhancement significantly improves the RAG system's ability to find relevant information for users' queries about government welfare schemes, especially when user queries contain Hindi terms or domain-specific terminology.

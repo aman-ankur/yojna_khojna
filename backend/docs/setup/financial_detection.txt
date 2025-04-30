@@ -1,0 +1,31 @@
+Financial Entity Detection Enhancement
+Problem
+The current entity extraction system isn't adequately identifying and prioritizing financial information, particularly in Hindi language content. This leads to missing or undervalued financial details during retrieval.
+Recommended Approach
+Enhance the existing entity extraction functionality to better detect, classify, and prioritize financial entities, especially in multilingual contexts.
+Technical Specification
+3.1 Financial Entity Pattern Extension
+
+Extend extract_key_entities function in rag/chain.py with financial-specific patterns
+Add comprehensive patterns for Hindi financial terminology
+Implement detection for percentage formats and monetary amounts
+Create specialized detection for installment-related terms
+
+3.2 Entity Prioritization Enhancement
+
+Implement a more sophisticated prioritization system that weights financial entities higher
+Ensure monetary amounts, percentages, and installment information receive high priority
+Create relationship tracking between financial entities (e.g., connecting amounts with their descriptors)
+
+3.3 Implementation Details
+
+Add financial pattern dictionary to existing entity extraction function
+Implement specialized regex patterns for various financial formats in both languages
+Enhance the entity scoring algorithm to prioritize financial information
+Add logging to track financial entity detection
+
+3.4 Financial Entity Patterns
+
+Percentage patterns: r"(\d+)\s*%", r"सहयोग राशि का (\d+)%"
+Monetary amount patterns: r"₹?\s*(\d+[\.,]\d+)\s*(लाख|करोड़|हज़ार)", r"(\d+)\s*(लाख|करोड़|हज़ार)\s*रुपये"
+Installment terms: r"(किस्त|किश्त)", r"(पहली|प्रथम|द्वितीय|तृतीय|चतुर्थ)"

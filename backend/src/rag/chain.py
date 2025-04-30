@@ -184,14 +184,45 @@ def extract_key_entities(query: str, documents: List[Document]) -> List[str]:
                 elif term_index % 2 == 1 and term_index - 1 >= 0:
                     entities.add(terms[term_index - 1])
     
-    # 4. Extract monetary amounts using regex
-    amount_pattern = r'₹\s*[\d,]+|[\d,]+\s*(?:रूपये|रुपये|रुपए|rupees?|rs\.?)'
-    amounts = re.findall(amount_pattern, text_to_process, re.IGNORECASE)
-    for amount in amounts:
-        entities.add(amount.strip())
-                
+    # 4. Extract monetary amounts, percentages, and installments using regex
+    # Enhanced monetary patterns (including lakh, crore, hazar)
+    monetary_pattern = r'(?:₹|Rs\.?)\s*([\d,]+(?:\.\d+)?)\s*(लाख|करोड़|हज़ार|lakh|crore|thousand)?|(?:([\d,]+(?:\.\d+)?)\s*(लाख|करोड़|हज़ार|lakh|crore|thousand))\s*(?:रूपये|रुपये|रुपए|rupees?)'
+    # Percentage patterns
+    percentage_pattern = r'(\d+(?:\.\d+)?)\s*(?:%|प्रतिशत)|सहयोग राशि का (\d+(?:\.\d+)?)%'
+    # Installment patterns
+    installment_pattern = r'(?:(\d+)\s*(?:st|nd|rd|th)?\s*)?(पहली|प्रथम|दूसरी|द्वितीय|तीसरी|तृतीय|चौथी|चतुर्थ)?\s*(किस्त|किश्त|installment)'
+
+    financial_entities = {} # Use dict to store type
+
+    # Find monetary amounts
+    monetary_matches = re.finditer(monetary_pattern, text_to_process, re.IGNORECASE)
+    for match in monetary_matches:
+        full_match = match.group(0).strip()
+        if full_match:
+            financial_entities[full_match] = "FINANCIAL_AMOUNT"
+            logger.debug(f"Detected FINANCIAL_AMOUNT: {full_match}")
+
+    # Find percentages
+    percentage_matches = re.finditer(percentage_pattern, text_to_process, re.IGNORECASE)
+    for match in percentage_matches:
+        full_match = match.group(0).strip()
+        if full_match:
+            financial_entities[full_match] = "PERCENTAGE"
+            logger.debug(f"Detected PERCENTAGE: {full_match}")
+
+    # Find installments
+    installment_matches = re.finditer(installment_pattern, text_to_process, re.IGNORECASE)
+    for match in installment_matches:
+        full_match = match.group(0).strip()
+        if full_match:
+            financial_entities[full_match] = "INSTALLMENT"
+            logger.debug(f"Detected INSTALLMENT: {full_match}")
+
+    # Add detected financial entities to the main set
+    entities.update(financial_entities.keys())
+
     extracted_list = list(entities)
-    logger.info(f"Extracted entities: {extracted_list}")
+    logger.info(f"Extracted entities (including financial): {extracted_list}")
     
     # Prioritize entities by relevance to query
     prioritized_entities = prioritize_entities(extracted_list, query)
@@ -221,13 +252,18 @@ def prioritize_entities(entities: List[str], query: str) -> List[str]:
         if any(term in entity.lower() for term in ["योजना", "scheme", "yojana"]):
             score += 4
             
-        # Monetary amounts get high priority
-        if re.search(r'₹|रूपये|रुपये|rupees|rs\.?', entity.lower()):
-            score += 4
-            
-        # Category-based scoring
+        # Financial entities get high priority
+        # Check against the patterns used for detection
+        if re.search(r'(?:₹|Rs\.?)\s*([\d,]+(?:\.\d+)?)\s*(लाख|करोड़|हज़ार|lakh|crore|thousand)?|(?:([\d,]+(?:\.\d+)?)\s*(लाख|करोड़|हज़ार|lakh|crore|thousand))\s*(?:रूपये|रुपये|रुपए|rupees?)', entity, re.IGNORECASE):
+             score += 5 # Highest priority for amounts
+        elif re.search(r'(\d+(?:\.\d+)?)\s*(?:%|प्रतिशत)|सहयोग राशि का (\d+(?:\.\d+)?)%', entity, re.IGNORECASE):
+             score += 4 # High priority for percentages
+        elif re.search(r'(?:(\d+)\s*(?:st|nd|rd|th)?\s*)?(पहली|प्रथम|दूसरी|द्वितीय|तीसरी|तृतीय|चौथी|चतुर्थ)?\s*(किस्त|किश्त|installment)', entity, re.IGNORECASE):
+             score += 4 # High priority for installments
+
+        # Category-based scoring (adjust scores slightly if needed)
         if any(term in entity.lower() for term in ["पात्रता", "eligibility", "योग्य", "eligible"]):
-            score += 3
+            score += 3 # Keep eligibility high
         if any(term in entity.lower() for term in ["आवेदन", "application", "apply", "process", "प्रक्रिया"]):
             score += 3
         if any(term in entity.lower() for term in ["document", "दस्तावेज", "certificate", "प्रमाण"]):
@@ -261,13 +297,27 @@ def regex_entity_extraction(query: str, documents: List[Document]) -> List[str]:
         if len(scheme.strip()) > 5:
             entities.add(scheme.strip())
     
-    # Extract monetary amounts
-    amount_pattern = r'₹\s*[\d,]+|[\d,]+\s*(?:रूपये|रुपये|रुपए|rupees?|rs\.?)'
-    amounts = re.findall(amount_pattern, text, re.IGNORECASE)
-    for amount in amounts:
-        entities.add(amount.strip())
-    
+    # Extract financial entities using enhanced patterns
+    # Monetary amounts
+    monetary_pattern = r'(?:₹|Rs\.?)\s*([\d,]+(?:\.\d+)?)\s*(लाख|करोड़|हज़ार|lakh|crore|thousand)?|(?:([\d,]+(?:\.\d+)?)\s*(लाख|करोड़|हज़ार|lakh|crore|thousand))\s*(?:रूपये|रुपये|रुपए|rupees?)'
+    monetary_matches = re.finditer(monetary_pattern, text, re.IGNORECASE)
+    for match in monetary_matches:
+        entities.add(match.group(0).strip())
+
+    # Percentages
+    percentage_pattern = r'(\d+(?:\.\d+)?)\s*(?:%|प्रतिशत)|सहयोग राशि का (\d+(?:\.\d+)?)%'
+    percentage_matches = re.finditer(percentage_pattern, text, re.IGNORECASE)
+    for match in percentage_matches:
+        entities.add(match.group(0).strip())
+
+    # Installments
+    installment_pattern = r'(?:(\d+)\s*(?:st|nd|rd|th)?\s*)?(पहली|प्रथम|दूसरी|द्वितीय|तीसरी|तृतीय|चौथी|चतुर्थ)?\s*(किस्त|किश्त|installment)'
+    installment_matches = re.finditer(installment_pattern, text, re.IGNORECASE)
+    for match in installment_matches:
+        entities.add(match.group(0).strip())
+
     entity_list = list(entities)
+    logger.info(f"Regex Extracted entities (including financial): {entity_list}")
     
     # Prioritize the extracted entities
     prioritized_entities = prioritize_entities(entity_list, query)
@@ -641,4 +691,4 @@ def extract_key_entities_ner(text: str) -> list:
             if match.strip() and len(match.strip()) > 5:  # Avoid short matches
                 entities.append({"text": match.strip(), "type": "SCHEME_NAME"})
     
-    return entities 
+    return entities

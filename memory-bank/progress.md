@@ -119,9 +119,9 @@
     *   Implemented multilingual capability with `xx_ent_wiki_sm` spaCy model.
     *   Created extensive domain dictionary with 12 categories for government schemes.
     *   Implemented bilingual term matching for Hindi/English pairs.
-    *   Added special extraction for monetary amounts, scheme names, etc.
+    *   Added special extraction for monetary amounts, scheme names, etc. **(Enhanced financial detection for amounts, percentages, installments - May 2025)**
     *   Implemented robust regex fallback for when spaCy is unavailable.
-    *   Added entity prioritization based on relevance to government schemes.
+    *   Added entity prioritization based on relevance to government schemes **(with higher priority for financial entities)**.
     *   Developed contextual follow-up query generation based on entity type.
     *   Created comprehensive test suite for entity extraction.
     *   Added documentation in memory-bank for entity extraction setup and strategy.
@@ -220,9 +220,9 @@
     *   Implemented multilingual model (`xx_ent_wiki_sm`) for better Hindi support.
     *   Created extensive domain dictionary with 12 categories for government schemes.
     *   Added bilingual term matching for Hindi/English pairs.
-    *   Implemented special extraction for monetary amounts, scheme names, etc.
+    *   Implemented special extraction for monetary amounts, scheme names, etc. **(Enhanced financial detection for amounts, percentages, installments - May 2025)**
     *   Created robust regex fallback mechanism for when spaCy is unavailable.
-    *   Added entity prioritization based on relevance to government schemes.
+    *   Added entity prioritization based on relevance to government schemes **(with higher priority for financial entities)**.
     *   Developed contextual follow-up query generation based on entity type.
     *   Added documentation for entity extraction setup and strategy.
 *   **Frontend Integration:** Sophisticated React UI with bilingual support.
@@ -279,7 +279,7 @@
   - Replaced basic NER with comprehensive domain-aware extraction
   - Added multilingual capability with xx_ent_wiki_sm spaCy model
   - Implemented bilingual term matching (Hindi/English pairs)
-  - Added special handling for monetary amounts and scheme names
+  - Added special handling for monetary amounts and scheme names **(Enhanced financial detection for amounts, percentages, installments - May 2025)**
   - Created robust regex fallback when spaCy is unavailable
 
 ### Sentence Limit Removal & Response Formatting:
@@ -294,11 +294,11 @@
 
 ### Testing Implementation:
 - Implemented unit tests for query reformulation with LLM mocking
-- Added test for entity extraction functionality
+- Added test for entity extraction functionality **(including specific tests for financial entities)**
 - Created integration tests for the enhanced retrieval pipeline
 - Implemented tests for response formatting functionality
 - Added script to verify spaCy model installation
-- Fixed all test issues, complete test suite now passes (69 tests passing, 5 skipped)
+- Fixed all test issues, complete test suite now passes (tests passing after user fixes)
 
 ### Multilingual Support:
 - Added language detection to the /chat endpoint
@@ -319,7 +319,7 @@
 
 ## ✅ Overall Status
 
-All 74 tests are now either passing (69) or appropriately skipped (5). The enhanced RAG pipeline and Suggested Questions feature have been successfully implemented with full test coverage.
+The enhanced RAG pipeline, including financial entity detection, and the Suggested Questions feature have been successfully implemented. Tests are passing after recent fixes.
 
 ## 🔜 Recommended Next Steps
 

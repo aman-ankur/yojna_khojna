@@ -15,10 +15,10 @@ The Yojna Khojna project is a RAG-based government scheme assistant for low-lite
 3. **Frontend Interface**: React-based chat UI with bilingual support
 4. **Enhanced RAG Pipeline**:
    - New prompts for better reformulation and practical answers
-   - Domain-specific entity extraction with multilingual support
+   - Domain-specific entity extraction with multilingual support **(including enhanced financial entity detection)**
    - Enhanced retrieval with follow-up queries
    - Response formatting with monetary amount highlighting
-   - Completed comprehensive test suite (69 passing, 5 skipped tests)
+   - Completed comprehensive test suite (tests passing after user fixes)
 
 ### Current Focus: Evaluation and Deployment
 
@@ -66,7 +66,7 @@ The implementation maintains the following key requirements:
 
 ## Immediate Next Steps
 
-1. Create test cases for manual evaluation across different scheme categories
+1. Create test cases for manual evaluation across different scheme categories **(including specific tests for financial queries)**
 2. Develop a benchmark dataset for measuring improvements
 3. Document examples of enhanced responses for stakeholders
 4. Prepare deployment guide with spaCy model setup instructions

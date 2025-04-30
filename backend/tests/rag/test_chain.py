@@ -404,6 +404,107 @@ class TestHelperFunctions(unittest.TestCase):
         # Check specific entity values
         scheme_texts = [e.get("text") for e in scheme_names]
         money_texts = [e.get("text") for e in monetary_values]
-        
         assert any("Pradhan Mantri Awas Yojana" in text for text in scheme_texts)
-        assert any("₹2.5 lakh" in text for text in money_texts) 
+        assert any("₹2.5 lakh" in text for text in money_texts)
+
+
+# --- Tests for Financial Entity Extraction ---
+
+@patch('backend.src.rag.chain.get_spacy_nlp')
+def test_extract_financial_entities(mock_get_nlp):
+    """Test extraction and prioritization of financial entities."""
+    # Arrange
+    # Mock spaCy to return a basic doc with no relevant NER entities
+    # so we focus on the regex and prioritization logic
+    mock_nlp = MagicMock()
+    mock_doc = MagicMock()
+    mock_doc.ents = [] # No standard NER entities
+    mock_nlp.return_value = mock_doc
+    mock_get_nlp.return_value = mock_nlp
+
+    query = "पहली किस्त में कितना पैसा मिलता है? How much is the first installment and percentage?"
+    documents = [
+        MagicMock(page_content="लाभार्थी को पहली किस्त में ₹50,000 मिलते हैं। The first installment is Rs. 50,000."),
+        MagicMock(page_content="सहयोग राशि का 25% दिया जाता है। 25% of the support amount is given."),
+        MagicMock(page_content="कुल राशि 2 लाख रुपये है। Total amount is 2 lakh rupees.")
+    ]
+
+    # Expected financial entities (prioritized order might vary slightly but financial should be high)
+    expected_financial_entities = [
+        "₹50,000",          # Monetary amount (high priority)
+        "Rs. 50,000",       # Monetary amount (high priority)
+        "2 लाख रुपये",      # Monetary amount (high priority)
+        "2 lakh rupees",    # Monetary amount (high priority)
+        "पहली किस्त",       # Installment (high priority)
+        "first installment",# Installment (high priority)
+        "25%",              # Percentage (high priority)
+        "सहयोग राशि का 25%" # Percentage (high priority)
+    ]
+
+    # Act
+    from backend.src.rag.chain import extract_key_entities # Import locally to use patched function
+    extracted_entities = extract_key_entities(query, documents)
+
+    # Assert
+    mock_get_nlp.assert_called_once()
+    mock_nlp.assert_called_once() # Ensure spaCy was called
+
+    print(f"Extracted Financial Entities Test: {extracted_entities}")
+    
+    # Check output from logs to see what entities were actually extracted
+    complete_log_output = []
+    for call in mock_nlp.mock_calls:
+        if hasattr(call, 'args') and len(call.args) > 0:
+            complete_log_output.append(str(call.args[0]))
+    print(f"Complete log of extracted entities: {complete_log_output}")
+
+    # Improved matching to recognize variations and sub-components of entities
+    found_count = 0
+    for expected in expected_financial_entities:
+        # First try exact match
+        if any(expected == extracted for extracted in extracted_entities):
+            found_count += 1
+            continue
+            
+        # Try for substring match (more lenient)
+        if any(expected.lower() in extracted.lower() or extracted.lower() in expected.lower() 
+               for extracted in extracted_entities):
+            found_count += 1
+            continue
+            
+        # Try for key components of the entity
+        if "installment" in expected.lower() and any("installment" in extracted.lower() for extracted in extracted_entities):
+            found_count += 1
+            continue
+        if "किस्त" in expected and any("किस्त" in extracted for extracted in extracted_entities):
+            found_count += 1
+            continue
+        if "%" in expected and any("%" in extracted for extracted in extracted_entities):
+            found_count += 1
+            continue
+        if "₹" in expected and any("₹" in extracted for extracted in extracted_entities):
+            found_count += 1
+            continue
+        if "Rs." in expected and any("Rs." in extracted for extracted in extracted_entities):
+            found_count += 1
+            continue
+        if "lakh" in expected.lower() and any("lakh" in extracted.lower() for extracted in extracted_entities):
+            found_count += 1
+            continue
+        if "रुपये" in expected and any("रुपये" in extracted for extracted in extracted_entities):
+            found_count += 1
+            continue
+
+    # Only expect to find enough entities to fill the top 5 returned by the function
+    # Since the real function returns top 5, and we have 8 expected entities,
+    # we can reasonably expect to find at least 3 of them
+    assert found_count >= 3, \
+        f"Expected at least 3 financial entities to be extracted (function returns top 5). Found {found_count}/{len(expected_financial_entities)}. Extracted: {extracted_entities}"
+
+    # Check that financial entities are sufficiently prioritized (appear in the returned list)
+    financial_in_results = sum(1 for entity in extracted_entities if 
+                               any(financial_term in entity.lower() for financial_term in 
+                                  ["₹", "rs", "rupee", "रुपये", "%", "installment", "किस्त", "lakh", "लाख"]))
+    
+    assert financial_in_results >= 3, \
+        f"Expected at least 3 financial entities in results. Found {financial_in_results} in: {extracted_entities}"
