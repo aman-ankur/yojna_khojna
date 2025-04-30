@@ -205,9 +205,9 @@ async def generate_contextual_questions(
     """Generate contextual follow-up questions using LLM."""
     if llm is None:
         llm = ChatAnthropic(
-            model="claude-3-sonnet-20240229",
-            temperature=0.2,
-            max_tokens=4000
+            model="claude-3-5-sonnet-20241022",
+            temperature=0.1,
+            max_tokens=4096
         )
     
     # Format chat history for the prompt

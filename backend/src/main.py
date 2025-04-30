@@ -350,7 +350,8 @@ async def chat_endpoint(query: ChatQuery):
         # The chain expects a dictionary with 'input' and 'chat_history' keys
         response = await rag_chain.ainvoke({
             "input": query.question,
-            "chat_history": formatted_history
+            "chat_history": formatted_history,
+            "language": language  # Pass the detected language to the chain
         })
 
         # --- Extract Answer --- 
@@ -358,7 +359,13 @@ async def chat_endpoint(query: ChatQuery):
         if isinstance(response, dict) and 'answer' in response:
             raw_answer = response['answer']
         elif isinstance(response, str):
-             raw_answer = response
+            # Clean any remaining markers or debug info from the string response
+            raw_answer = response.replace("## QUESTION:", "").replace("## ANSWER:", "")
+            # If the response contains language markers like "(in hi):", remove them
+            language_marker_match = re.search(r'\(in [a-z]{2}\):', raw_answer)
+            if language_marker_match:
+                raw_answer = raw_answer.replace(language_marker_match.group(0), "")
+            raw_answer = raw_answer.strip()
         else:
             logger.error(f"Unexpected RAG chain response type: {type(response)}. Response: {response}")
             raw_answer = "" # Default to empty if format is unknown
