@@ -29,6 +29,7 @@ We're now focused on evaluating the enhanced RAG system and preparing for deploy
    - Creating user guides and examples
    - Updating technical documentation
    - Creating deployment instructions including spaCy model setup
+   - **Improving PDF Table Extraction (Completed):** Enhanced `pdf_extractor.py` to detect and format tables as Markdown, preserving structured data during ingestion. Added corresponding tests.
 
 3. **Deployment Preparation**:
    - Testing in a staging environment
@@ -57,7 +58,7 @@ The implementation maintains the following key requirements:
 - **Vector DB**: Weaviate
 - **NLP**: spaCy with xx_ent_wiki_sm (multilingual model)
 - **Embedding**: Sentence-Transformers
-- **PDF Processing**: pdfplumber with pytesseract OCR fallback
+- **PDF Processing**: pdfplumber (with table extraction) + pytesseract OCR fallback
 
 ## Immediate Next Steps
 
