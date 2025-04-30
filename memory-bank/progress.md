@@ -14,9 +14,10 @@
 *   [x] **1.2: PDF Text Extraction (pdfplumber):**
     *   Implemented `pdf_extractor.py` using `pdfplumber`.
     *   Function to extract text page by page.
+    *   **Enhanced (May 2025):** Added table detection and extraction, formatting tables as Markdown within the extracted text to preserve structure. Updated tests.
 *   [x] **1.3: OCR Integration (pytesseract):**
     *   Integrated `pytesseract` into `pdf_extractor.py`.
-    *   Added fallback logic to use OCR if direct text extraction is insufficient.
+    *   Refined fallback logic: OCR is now used only if *both* direct text extraction *and* table extraction yield minimal content.
     *   Included necessary configurations (e.g., language packs `eng+hin`).
 *   [x] **1.4: Vector Database Setup (Weaviate via Docker):**
     *   Created `docker-compose.yml` for Weaviate.
@@ -250,7 +251,7 @@
 
 ## Backlog / Future Ideas
 
-*   Improve PDF text extraction quality (OCR for scanned documents?).
+*   Improve PDF text extraction quality further (e.g., better handling of complex layouts, scanned documents). *(Table extraction implemented May 2025)*
 *   Implement user feedback mechanism.
 *   Explore alternative embedding models or LLMs.
 *   Add more sophisticated entity linking or knowledge graph integration.

@@ -1,0 +1,31 @@
+ Semantic-Aware Document Chunking
+Problem
+The current chunking strategy, based primarily on character counts, is fragmenting logical units of information such as sections, tables, and financial data. This causes related information to be split across multiple chunks, making it difficult to retrieve complete information.
+Recommended Approach
+Modify the document chunking strategy to respect semantic boundaries such as sections, subsections, and tables, ensuring that logical units remain intact whenever possible.
+Technical Specification
+2.1 Enhanced Chunking Strategy
+
+Update document_chunker.py to implement a more semantically-aware chunking strategy
+Use section headers and paragraph boundaries as primary split points
+Ensure complete tables remain in a single chunk when possible
+Increase chunk overlap around tables and financial information
+
+2.2 Section Detection
+
+Implement detection for section headers using regex patterns for both Hindi and English
+Identify section numbering patterns (e.g., "Section 6.6.3" or "खंड 6.6.3")
+Create special handling for headers to ensure they stay with their content
+
+2.3 Table Boundary Preservation
+
+Detect table markers inserted during extraction
+Ensure table boundaries aren't split during chunking
+If tables must be split due to size, ensure logical splitting with appropriate context
+
+2.4 Implementation Details
+
+Modify the existing RecursiveCharacterTextSplitter configuration
+Add custom separators specific to document structure
+Implement pre-processing to identify and mark semantic boundaries
+Adjust chunk size and overlap dynamically based on content type

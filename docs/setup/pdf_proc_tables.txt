@@ -1,0 +1,35 @@
+1. Table Extraction Enhancement (95% Confidence)
+Problem
+The current PDF extraction process is failing to properly preserve tabular data, particularly for financial information such as installment percentages. This leads to incomplete or incorrect information retrieval when users query about structured data.
+Recommended Approach
+Enhance the existing PDF extraction process to detect and specially process tabular content, preserving its structure and relationships in a format that can be effectively chunked and retrieved.
+Technical Specification
+1.1 Table Detection and Extraction
+
+Extend the current pdf_extractor.py to specifically identify tables in PDF documents
+Utilize pdfplumber's table detection capabilities which are already in the dependency chain
+Process detected tables with special formatting that preserves their structure
+
+1.2 Table Representation Format
+
+Format extracted tables as markdown tables within the text
+Add clear table markers before and after table content
+Include table headers and ensure alignment of columns
+Preserve table captions and section references
+
+1.3 Implementation Details
+
+Add a table processing function to pdf_extractor.py
+Process tables separately from regular text
+Insert processed table text back into the document at the correct position
+Add logging for table detection and processing
+
+1.4 Example Table Formatting
+[TABLE_START: Section 6.6.3 - Installment Schedule]
+| क्रम | किस्त | किस्त की राशि | आवश्यक प्रगति |
+|-----|------|--------------|-------------|
+| 1 | प्रथम | सहयोग राशि का 15% | पंजीकरण के बाद |
+| 2 | द्वितीय | सहयोग राशि का 25% | प्लिंथ स्तर तक |
+| 3 | तृतीय | सहयोग राशि का 50% | लिंटेल स्तर तक |
+| 4 | चतुर्थ | सहयोग राशि का 10% | छत के बाद |
+[TABLE_END]
