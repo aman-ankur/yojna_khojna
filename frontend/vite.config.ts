@@ -10,4 +10,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
   },
+  // Ensure base path works when served from FastAPI
+  base: './',
+  // Production build settings
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
 })

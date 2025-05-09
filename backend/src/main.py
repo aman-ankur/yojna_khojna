@@ -2,9 +2,11 @@ import tempfile
 import shutil
 import logging
 import hashlib
+import os
 from pathlib import Path
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware # Import CORS Middleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import contextmanager
 import weaviate
 import weaviate.classes as wvc # Import Weaviate classes for filtering
@@ -38,11 +40,12 @@ app = FastAPI(
 )
 
 # === CORS Configuration ===
-# Allow requests from your frontend development server
+# Allow requests from your frontend development server and demo hosts
 origins = [
     "http://localhost:5173", # Vite default dev server port
     "http://localhost:3000", # Common alternative (e.g., Create React App)
     "http://127.0.0.1:5173",
+    "*", # Allow requests from ngrok/tunnel domains for demo purposes
 ]
 
 app.add_middleware(
@@ -52,7 +55,21 @@ app.add_middleware(
     allow_methods=["*"], # Allow all methods (GET, POST, etc.)
     allow_headers=["*"], # Allow all headers
 )
-# =========================
+
+# === Serve Frontend Static Files ===
+# Path to the frontend static files (relative to where uvicorn is run)
+static_dir = os.environ.get("STATIC_DIR", "../frontend/dist")
+static_path = Path(static_dir)
+
+# Check if the static directory exists before mounting
+if static_path.exists() and static_path.is_dir():
+    logger.info(f"Mounting frontend static files from: {static_path.absolute()}")
+    # Mount the static files at the root path, with support for HTML files
+    app.mount("/", StaticFiles(directory=static_path, html=True), name="static")
+else:
+    logger.warning(f"Frontend static directory not found at {static_path.absolute()}")
+    logger.warning("API will run without serving the frontend. Build the frontend with 'npm run build' in the frontend directory.")
+# ================================
 
 # === DIAGNOSTIC ROUTE ===
 @app.get("/test-route")
